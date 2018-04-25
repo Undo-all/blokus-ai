@@ -1,5 +1,7 @@
 use std::intrinsics;
 
+use shape::Shape;
+
 const BOTTOM_MASK: u64 = 0x00FFFFFFFFFFFFFF;
 const ROW_MASK: u64 = 0x0000000000003FFF;
 const EAST_MASK: u64 = 0xFFFFFBFFEFFFBFFE;
@@ -8,7 +10,7 @@ const FIRST_MASK: u64 = 0x0000000000003FFE;
 const REST_MASK: u64 = 0x0000000000001FFF;
 const HALF_MASK: u64 = 0x000000000FFFFFFF;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct BitBoard {
     blocks: [u64; 4],
 }
@@ -16,13 +18,13 @@ pub struct BitBoard {
 impl BitBoard {
     pub fn new() -> Self {
         BitBoard {
-            blocks: [1, 0, 0, 0],
+            blocks: [0, 0, 0, 0],
         }
     }
 
     pub fn illegal(&self, opponent: &BitBoard) -> Self {
         // let mut board = BitBoard::new();
-        let mut board = opponent.clone();
+        let mut board = self.clone();
 
         let block = self.blocks[0];
         let mut flood = 0;
@@ -35,7 +37,7 @@ impl BitBoard {
         let block = self.blocks[1];
         flood |= (block & ROW_MASK) << 42;
 
-        board.blocks[0] |= flood & BOTTOM_MASK;
+        board.blocks[0] |= (flood & BOTTOM_MASK) | opponent.blocks[0];
         flood = 0;
 
         flood |= (block >> 1) & WEST_MASK;
@@ -46,7 +48,7 @@ impl BitBoard {
         let block = self.blocks[2];
         flood |= (block & ROW_MASK) << 42;
 
-        board.blocks[1] |= flood & BOTTOM_MASK;
+        board.blocks[1] |= (flood & BOTTOM_MASK) | opponent.blocks[1];
         flood = 0;
 
         flood |= (block >> 1) & WEST_MASK;
@@ -57,7 +59,7 @@ impl BitBoard {
         let block = self.blocks[3];
         flood |= (block & ROW_MASK) << 42;
 
-        board.blocks[2] |= flood & BOTTOM_MASK;
+        board.blocks[2] |= (flood & BOTTOM_MASK) | opponent.blocks[2];
         flood = 0;
 
         flood |= (block >> 1) & WEST_MASK;
@@ -65,7 +67,7 @@ impl BitBoard {
         flood |= (block << 14) | prop;
         flood |= (block >> 14);
 
-        board.blocks[3] |= flood & HALF_MASK;
+        board.blocks[3] |= (flood & HALF_MASK) | opponent.blocks[3];
         board
     }
 
@@ -127,16 +129,50 @@ impl BitBoard {
             .sum()
     }
 
-    pub fn place_bits(&mut self, bits: u64, pos: BitPosition) {
-        let block = pos.block as usize;
-        let shift = pos.shift as usize;
-        self.blocks[block] |= bits << shift;
-        self.blocks[block+1] |= bits >> (56 - shift);
+    pub fn place_shape(&self, shape: &Shape, attachment: &u8, at: usize, illegal: &BitBoard) -> Option<Self> {
+        //let index = at - (shape.attachments[attachment] as usize);
+        if (at < (*attachment as usize)) {
+            return None;
+        }
+
+        let index = (at as usize) - (*attachment as usize);
+
+        if (index < 0) || ((index % 14) + (shape.width as usize) >= 14) {
+            return None;
+        }
+
+        let mut copy = self.clone();
+
+        let block = index / 56;
+        let shift = index % 56;
+
+        let shifted = shape.bits << shift;
+        if (shifted & illegal.blocks[block]) != 0 {
+            return None;
+        }
+        
+        copy.blocks[block] |= shifted & BOTTOM_MASK;
+
+        if block == 3 {
+            if (shifted & HALF_MASK) != shifted {
+                None
+            } else {
+                Some(copy)
+            }
+        } else {
+            let shifted = shape.bits >> (56 - shift);
+            if (shifted & illegal.blocks[block + 1]) != 0 {
+                None
+            } else {
+                copy.blocks[block + 1] |= shifted & BOTTOM_MASK;
+                Some(copy)
+            }
+        }
     }
 
     pub fn display(&self) {
         for block in self.blocks.iter().rev() {
-            for y in 0..4 {
+            for y in (if *block == self.blocks[3] { 2 } else { 0 })..4 {
                 for x in 0..14 {
                     let s = (3 - y) * 14 + x;
                     print!("{}", (block >> s) & (1 as u64));
@@ -145,6 +181,10 @@ impl BitBoard {
                 println!();
             }
         }
+    }
+
+    pub fn is_occupied(&self, at: usize) -> bool {
+        ((self.blocks[at / 56] >> (at % 56)) & 1) == 1
     }
 
     pub fn iter(&self) -> BitIterator {
@@ -159,12 +199,6 @@ impl BitBoard {
 pub struct BitPosition {
     pub block: u8,
     pub shift: u8,
-}
-
-impl BitPosition {
-    fn new(block: u8, shift: u8) -> Self {
-        BitPosition { block, shift }
-    }
 }
 
 pub struct BitIterator<'a> {
@@ -184,9 +218,9 @@ impl<'a> BitIterator<'a> {
 }
 
 impl<'a> Iterator for BitIterator<'a> {
-    type Item = BitPosition;
+    type Item = usize;
 
-    fn next(&mut self) -> Option<BitPosition> {
+    fn next(&mut self) -> Option<usize> {
         loop {
             let index = unsafe { intrinsics::cttz(self.bits) };
 
@@ -199,9 +233,8 @@ impl<'a> Iterator for BitIterator<'a> {
                 }
             } else {
                 self.bits &= !((1 as u64) << index);
-                return Some(BitPosition::new(self.block, index as u8));
+                return Some((self.block as usize) * 56 + (index as usize));
             }
         }
     }
 }
-
