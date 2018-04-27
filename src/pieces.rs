@@ -1,4 +1,4 @@
-use piece::Piece;
+use piece::*;
 use shape::Shape;
 use std::slice;
 
@@ -990,3 +990,8 @@ const PIECES: [Piece; 21] = [
 pub fn iter() -> slice::Iter<'static, Piece> {
     PIECES.iter()
 }
+
+pub fn by_id(id: PieceId) -> &'static Piece {
+    unsafe { PIECES.get_unchecked(id as usize) }
+}
+

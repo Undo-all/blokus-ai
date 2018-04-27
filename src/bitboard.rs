@@ -31,9 +31,9 @@ impl BitBoard {
 
         flood |= (block >> 1) & WEST_MASK;
         flood |= (block << 1) & EAST_MASK;
-        flood |= (block << 14);
-        flood |= (block >> 14);
-        let prop = (block >> 42);
+        flood |= block << 14;
+        flood |= block >> 14;
+        let prop = block >> 42;
         let block = self.blocks[1];
         flood |= (block & ROW_MASK) << 42;
 
@@ -43,8 +43,8 @@ impl BitBoard {
         flood |= (block >> 1) & WEST_MASK;
         flood |= (block << 1) & EAST_MASK;
         flood |= (block << 14) | prop;
-        flood |= (block >> 14);
-        let prop = (block >> 42);
+        flood |= block >> 14;
+        let prop = block >> 42;
         let block = self.blocks[2];
         flood |= (block & ROW_MASK) << 42;
 
@@ -54,8 +54,8 @@ impl BitBoard {
         flood |= (block >> 1) & WEST_MASK;
         flood |= (block << 1) & EAST_MASK;
         flood |= (block << 14) | prop;
-        flood |= (block >> 14);
-        let prop = (block >> 42);
+        flood |= block >> 14;
+        let prop = block >> 42;
         let block = self.blocks[3];
         flood |= (block & ROW_MASK) << 42;
 
@@ -65,7 +65,7 @@ impl BitBoard {
         flood |= (block >> 1) & WEST_MASK;
         flood |= (block << 1) & EAST_MASK;
         flood |= (block << 14) | prop;
-        flood |= (block >> 14);
+        flood |= block >> 14;
 
         board.blocks[3] |= (flood & HALF_MASK) | opponent.blocks[3];
         board
@@ -122,7 +122,7 @@ impl BitBoard {
         board
     }
 
-    pub fn count_bits(&self) -> usize {
+    pub fn count_tiles(&self) -> usize {
         self.blocks
             .iter()
             .map(|&block| unsafe { intrinsics::ctpop(block) as usize })
@@ -130,14 +130,13 @@ impl BitBoard {
     }
 
     pub fn place_shape(&self, shape: &Shape, attachment: &u8, at: usize, illegal: &BitBoard) -> Option<Self> {
-        //let index = at - (shape.attachments[attachment] as usize);
-        if (at < (*attachment as usize)) {
+        if at < (*attachment as usize) {
             return None;
         }
 
         let index = (at as usize) - (*attachment as usize);
 
-        if (index < 0) || ((index % 14) + (shape.width as usize) >= 14) {
+        if (index % 14) + (shape.width as usize) >= 14 {
             return None;
         }
 
@@ -185,6 +184,10 @@ impl BitBoard {
 
     pub fn is_occupied(&self, at: usize) -> bool {
         ((self.blocks[at / 56] >> (at % 56)) & 1) == 1
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.blocks.iter().all(|&b| b == 0)
     }
 
     pub fn iter(&self) -> BitIterator {
