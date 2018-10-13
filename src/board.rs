@@ -6,15 +6,15 @@ use pieces;
 
 #[derive(Clone)]
 pub struct Board {
-    placed: [BitBoard; 2],
-    banks: [Bank; 2],
+    placed: [BitBoard; 4],
+    banks: [Bank; 4],
 }
 
 impl Board {
     pub fn new() -> Self {
         Board {
-            placed: [BitBoard::new(), BitBoard::new()],
-            banks: [Bank::new(), Bank::new()],
+            placed: [BitBoard::new(), BitBoard::new(), BitBoard::new(), BitBoard::new()],
+            banks: [Bank::new(), Bank::new(), Bank::new(), Bank::new()],
         }
     }
 
@@ -23,13 +23,15 @@ impl Board {
         
         let (corners, illegal) = if board.is_empty() {
             let start = match player {
-                Player::Orange => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 130, &BitBoard::new()).unwrap(),
-                Player::Purple => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 65, &BitBoard::new()).unwrap(),
+                Player::Blue => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 0, &BitBoard::new()).unwrap(),
+                Player::Yellow => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 19, &BitBoard::new()).unwrap(),
+                Player::Red => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 381, &BitBoard::new()).unwrap(),
+                Player::Green => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 399, &BitBoard::new()).unwrap(),
             };
 
             (start, BitBoard::new())
         } else {
-            let illegal = board.illegal(&self.placed[player.opponent() as usize]);
+            let illegal = board.illegal(player, &self.placed);
             (board.corners(&illegal), illegal)
         };
 
@@ -63,17 +65,37 @@ impl Board {
         }
     }
 
+	pub fn find_winner(&self) -> Option<Player> {	
+		let winner = if self.is_winner(Player::Blue) {
+			Some(Player::Blue)
+		} else if self.is_winner(Player::Yellow) {
+			Some(Player::Yellow)
+		} else if self.is_winner(Player::Red) {
+			Some(Player::Red)
+		} else if self.is_winner(Player::Yellow) {
+			Some(Player::Yellow)
+		} else {
+			None
+		};
+
+		winner
+	}
+
     pub fn display(&self) {
-        for y in 0..14 {
-            for x in 0..14 {
-                let index = (13-y)*14 + x;
+        for y in 0..20 {
+            for x in 0..20 {
+                let index = (19-y)*20 + x;
                 if self.placed[0].is_occupied(index) {
-                    print!("\x1b[101m");
-                } else if self.placed[1].is_occupied(index) {
                     print!("\x1b[106m");
+                } else if self.placed[1].is_occupied(index) {
+                    print!("\x1b[103m");
+                } else if self.placed[2].is_occupied(index) {
+                    print!("\x1b[101m");
+				} else if self.placed[3].is_occupied(index) {
+					print!("\x1b[102m");
                 } else {
-                    print!("\x1b[100m");
-                }
+					print!("\x1b[100m");
+				}
 
                 print!(" ");
             }
@@ -88,7 +110,16 @@ impl Board {
     }
 
     pub fn is_winner(&self, player: Player) -> bool {
-        self.score(player) > self.score(player.opponent())
+		let mut turn = player;
+		let score = self.score(player);
+		for _ in 0..3 {
+			turn = turn.next();
+			if self.score(turn) > score {
+				return false;
+			}
+		}
+
+		true
     }
 }
 

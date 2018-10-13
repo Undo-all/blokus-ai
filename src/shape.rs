@@ -4,7 +4,7 @@ use std::ops::{Add, Sub};
 
 #[derive(Clone)]
 pub struct Shape {
-    pub bits: u64,
+    pub bits: [u64; 2],
     pub attachments: &'static [u8],
     pub width: u8,
 }

@@ -1,127 +1,109 @@
 use std::intrinsics;
 
 use shape::Shape;
+use player::Player;
 
+/*
 const BOTTOM_MASK: u64 = 0x00FFFFFFFFFFFFFF;
 const ROW_MASK: u64 = 0x0000000000003FFF;
+// One of these may be incorrect.
 const EAST_MASK: u64 = 0xFFFFFBFFEFFFBFFE;
 const WEST_MASK: u64 = 0xFF7FFDFFF7FFDFFF;
 const FIRST_MASK: u64 = 0x0000000000003FFE;
 const REST_MASK: u64 = 0x0000000000001FFF;
 const HALF_MASK: u64 = 0x000000000FFFFFFF;
+*/
+
+const WEST_MASK: u64 = 0x07FFFF7FFFF7FFFF;
+const EAST_MASK: u64 = 0x0FFFFEFFFFEFFFFE;
+const BOTTOM_MASK: u64 = 0x0FFFFFFFFFFFFFFF;
+const ROW_MASK: u64 = 0x00000000000FFFFF;
+const FIRST_MASK: u64 = 0x00000000000FFFFE;
+const REST_MASK: u64 = 0x000000000007FFFF;
+const HALF_MASK: u64 = 0x000000FFFFFFFFFF;
 
 #[derive(Clone, PartialEq)]
 pub struct BitBoard {
-    blocks: [u64; 4],
+	blocks: [u64; 7],
 }
 
 impl BitBoard {
-    pub fn new() -> Self {
-        BitBoard {
-            blocks: [0, 0, 0, 0],
-        }
-    }
+	pub fn new() -> Self {
+		BitBoard {
+			blocks: [0, 0, 0, 0, 0, 0, 0]
+		}
+	}
 
-    pub fn illegal(&self, opponent: &BitBoard) -> Self {
-        // let mut board = BitBoard::new();
-        let mut board = self.clone();
+	pub fn illegal(&self, player: Player, boards: &[BitBoard; 4]) -> Self {
+		let mut enemy = BitBoard::new();
+		let mut turn = player;
+		for _ in 0..3 {
+			turn = turn.next();
+			for i in 0..7 {
+				enemy.blocks[i] |= boards[turn as usize].blocks[i];
+			}
+		}
 
-        let block = self.blocks[0];
-        let mut flood = 0;
+		let enemy = enemy;
+		
+		let mut board = self.clone();
 
-        flood |= (block >> 1) & WEST_MASK;
-        flood |= (block << 1) & EAST_MASK;
-        flood |= block << 14;
-        flood |= block >> 14;
-        let prop = block >> 42;
-        let block = self.blocks[1];
-        flood |= (block & ROW_MASK) << 42;
+		let mut block = self.blocks[0];
+		let mut flood = 0;
+		let mut prop = 0;
 
-        board.blocks[0] |= (flood & BOTTOM_MASK) | opponent.blocks[0];
-        flood = 0;
+		// TODO: Manually unroll
+		for i in 0..6 {
+			flood = prop;
+			flood |= (block >> 1) & WEST_MASK;
+			flood |= (block << 1) & EAST_MASK;
+			flood |= block >> 20;
+			flood |= block << 20;
+			prop = block >> 40;
+			block = self.blocks[i+1];
+			flood |= (block & ROW_MASK) << 40;
 
-        flood |= (block >> 1) & WEST_MASK;
-        flood |= (block << 1) & EAST_MASK;
-        flood |= (block << 14) | prop;
-        flood |= block >> 14;
-        let prop = block >> 42;
-        let block = self.blocks[2];
-        flood |= (block & ROW_MASK) << 42;
+			board.blocks[i] |= (flood & BOTTOM_MASK) | enemy.blocks[i];
+		}
 
-        board.blocks[1] |= (flood & BOTTOM_MASK) | opponent.blocks[1];
-        flood = 0;
+		flood = prop;
+		flood |= (block >> 1) & WEST_MASK;
+		flood |= (block << 1) & EAST_MASK;
+		flood |= block << 20;
+		flood |= block >> 20;
+		
+		board.blocks[6] |= (flood & HALF_MASK) | enemy.blocks[6];
+		board
+	}
 
-        flood |= (block >> 1) & WEST_MASK;
-        flood |= (block << 1) & EAST_MASK;
-        flood |= (block << 14) | prop;
-        flood |= block >> 14;
-        let prop = block >> 42;
-        let block = self.blocks[3];
-        flood |= (block & ROW_MASK) << 42;
+	pub fn corners(&self, illegal: &BitBoard) -> Self {
+		let mut board = BitBoard::new();
+		let mut block = self.blocks[0];
+		let mut flood = 0;
+		let mut prop = 0;
 
-        board.blocks[2] |= (flood & BOTTOM_MASK) | opponent.blocks[2];
-        flood = 0;
+		for i in 0..6 {
+			flood = prop;
+			flood |= (block >> 21) & WEST_MASK;
+			flood |= (block << 19) & WEST_MASK;
+			flood |= (block << 21) & EAST_MASK;
+			flood |= (block >> 19) & EAST_MASK;
+			prop = ((block >> 39) & FIRST_MASK) | ((block >> 41) & REST_MASK);
+			block = self.blocks[i+1];
+			flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & REST_MASK)) << 42;
+			board.blocks[i] = flood & BOTTOM_MASK & !illegal.blocks[i];
+		}
 
-        flood |= (block >> 1) & WEST_MASK;
-        flood |= (block << 1) & EAST_MASK;
-        flood |= (block << 14) | prop;
-        flood |= block >> 14;
+		flood = prop;
+		flood |= (block >> 21) & WEST_MASK;
+		flood |= (block << 19) & WEST_MASK;
+		flood |= (block << 21) & EAST_MASK;
+		flood |= (block >> 19) & EAST_MASK;
+		board.blocks[6] = flood & HALF_MASK & !illegal.blocks[3];
 
-        board.blocks[3] |= (flood & HALF_MASK) | opponent.blocks[3];
-        board
-    }
-
-    pub fn corners(&self, illegal: &BitBoard) -> Self {
-        let mut board = BitBoard::new();
-
-        let block = self.blocks[0];
-        let mut flood = 0;
-
-        flood |= (block >> 15) & WEST_MASK;
-        flood |= (block << 13) & WEST_MASK;
-        flood |= (block << 15) & EAST_MASK;
-        flood |= (block >> 13) & EAST_MASK;
-        let prop = ((block >> 41) & FIRST_MASK) | ((block >> 43) & REST_MASK);
-        let block = self.blocks[1];
-        flood |= ((block >> 1) | ((block << 1) & REST_MASK)) << 42;
-
-        board.blocks[0] = flood & BOTTOM_MASK & !illegal.blocks[0];
-        flood = 0;
-
-        flood |= (block >> 15) & WEST_MASK;
-        flood |= (block << 13) & WEST_MASK;
-        flood |= (block << 15) & EAST_MASK;
-        flood |= (block >> 13) & EAST_MASK;
-        flood |= prop;
-        let prop = ((block >> 41) & FIRST_MASK) | ((block >> 43) & REST_MASK);
-        let block = self.blocks[2];
-        flood |= ((block >> 1) | ((block << 1) & REST_MASK)) << 42;
-
-        board.blocks[1] = flood & BOTTOM_MASK & !illegal.blocks[1];
-        flood = 0;
-
-        flood |= (block >> 15) & WEST_MASK;
-        flood |= (block << 13) & WEST_MASK;
-        flood |= (block << 15) & EAST_MASK;
-        flood |= (block >> 13) & EAST_MASK;
-        flood |= prop;
-        let prop = ((block >> 41) & FIRST_MASK) | ((block >> 43) & REST_MASK);
-        let block = self.blocks[3];
-        flood |= ((block >> 1) | ((block << 1) & REST_MASK)) << 42;
-
-        board.blocks[2] = flood & BOTTOM_MASK & !illegal.blocks[2];
-        flood = 0;
-
-        flood |= (block >> 15) & WEST_MASK;
-        flood |= (block << 13) & WEST_MASK;
-        flood |= (block << 15) & EAST_MASK;
-        flood |= (block >> 13) & EAST_MASK;
-        flood |= prop;
-
-        board.blocks[3] = flood & HALF_MASK & !illegal.blocks[3];
-        board
-    }
-
+		board
+	}
+	
     pub fn count_tiles(&self) -> usize {
         self.blocks
             .iter()
@@ -134,32 +116,32 @@ impl BitBoard {
             return None;
         }
 
-        let index = (at as usize) - (*attachment as usize);
+        let index = at - (*attachment as usize);
 
-        if (index % 14) + (shape.width as usize) >= 14 {
+        if (index % 20) + (shape.width as usize) >= 20 {
             return None;
         }
 
         let mut copy = self.clone();
 
-        let block = index / 56;
-        let shift = index % 56;
+        let block = index / 60;
+        let shift = index % 60;
 
-        let shifted = shape.bits << shift;
+        let shifted = shape.bits[0] << shift;
         if (shifted & illegal.blocks[block]) != 0 {
             return None;
         }
         
         copy.blocks[block] |= shifted & BOTTOM_MASK;
 
-        if block == 3 {
+        if block == 6 {
             if (shifted & HALF_MASK) != shifted {
                 None
             } else {
                 Some(copy)
             }
         } else {
-            let shifted = shape.bits >> (56 - shift);
+            let shifted = (shape.bits[0] >> (60 - shift)) | (shape.bits[1] << shift);
             if (shifted & illegal.blocks[block + 1]) != 0 {
                 None
             } else {
@@ -171,7 +153,7 @@ impl BitBoard {
 
     pub fn display(&self) {
         for block in self.blocks.iter().rev() {
-            for y in (if *block == self.blocks[3] { 2 } else { 0 })..4 {
+            for y in (if *block == self.blocks[6] { 1 } else { 0 })..3 {
                 for x in 0..14 {
                     let s = (3 - y) * 14 + x;
                     print!("{}", (block >> s) & (1 as u64));
@@ -183,7 +165,7 @@ impl BitBoard {
     }
 
     pub fn is_occupied(&self, at: usize) -> bool {
-        ((self.blocks[at / 56] >> (at % 56)) & 1) == 1
+        ((self.blocks[at / 60] >> (at % 60)) & 1) == 1
     }
 
     pub fn is_empty(&self) -> bool {
@@ -206,7 +188,7 @@ pub struct BitPosition {
 
 pub struct BitIterator<'a> {
     block: u8,
-    blocks: &'a [u64; 4],
+    blocks: &'a [u64; 7],
     bits: u64,
 }
 
@@ -228,7 +210,7 @@ impl<'a> Iterator for BitIterator<'a> {
             let index = unsafe { intrinsics::cttz(self.bits) };
 
             if index == 64 {
-                if self.block == 3 {
+                if self.block == 6 {
                     return None;
                 } else {
                     self.block += 1;
@@ -236,7 +218,7 @@ impl<'a> Iterator for BitIterator<'a> {
                 }
             } else {
                 self.bits &= !((1 as u64) << index);
-                return Some((self.block as usize) * 56 + (index as usize));
+                return Some((self.block as usize) * 60 + (index as usize));
             }
         }
     }

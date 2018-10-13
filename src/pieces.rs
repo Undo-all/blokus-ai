@@ -3,6 +3,549 @@ use shape::Shape;
 use std::slice;
 
 pub const PIECES: [Piece; 21] = [
+	Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000000001, 0x0000000000000000],
+            attachments: &[0],
+            width: 0
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000000003, 0x0000000000000000],
+            attachments: &[0, 1],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000000000100001, 0x0000000000000000],
+            attachments: &[0, 20],
+            width: 0
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000200003, 0x0000000000000000],
+            attachments: &[0, 1, 21],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000000000100003, 0x0000000000000000],
+            attachments: &[0, 1, 20],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000000000300002, 0x0000000000000000],
+            attachments: &[1, 20, 21],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000000000300001, 0x0000000000000000],
+            attachments: &[0, 20, 21],
+            width: 1
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000000007, 0x0000000000000000],
+            attachments: &[0, 2],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000010000100001, 0x0000000000000000],
+            attachments: &[0, 40],
+            width: 0
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000300003, 0x0000000000000000],
+            attachments: &[0, 1, 20, 21],
+            width: 1
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000700002, 0x0000000000000000],
+            attachments: &[1, 20, 22],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000200007, 0x0000000000000000],
+            attachments: &[0, 2, 21],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000020000300002, 0x0000000000000000],
+            attachments: &[1, 20, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000010000300001, 0x0000000000000000],
+            attachments: &[0, 21, 40],
+            width: 1
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x000000000000000F, 0x0000000000000000],
+            attachments: &[0, 3],
+            width: 3
+        },
+        Shape {
+            bits: [0x0000010000100001, 0x0000000000000001],
+            attachments: &[0, 60],
+            width: 0
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000700004, 0x0000000000000000],
+            attachments: &[2, 20, 22],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000700001, 0x0000000000000000],
+            attachments: &[0, 20, 22],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000400007, 0x0000000000000000],
+            attachments: &[0, 2, 22],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000100007, 0x0000000000000000],
+            attachments: &[0, 2, 20],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000030000200002, 0x0000000000000000],
+            attachments: &[1, 40, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000030000100001, 0x0000000000000000],
+            attachments: &[0, 40, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000020000200003, 0x0000000000000000],
+            attachments: &[0, 1, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000010000100003, 0x0000000000000000],
+            attachments: &[0, 1, 40],
+            width: 1
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000300006, 0x0000000000000000],
+            attachments: &[1, 2, 20, 21],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000600003, 0x0000000000000000],
+            attachments: &[0, 1, 21, 22],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000010000300002, 0x0000000000000000],
+            attachments: &[1, 20, 21, 40],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000020000300001, 0x0000000000000000],
+            attachments: &[0, 20, 21, 41],
+            width: 1
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000F00001, 0x0000000000000000],
+            attachments: &[0, 20, 23],
+            width: 3
+        },
+        Shape {
+            bits: [0x0000000000F00008, 0x0000000000000000],
+            attachments: &[3, 20, 23],
+            width: 3
+        },
+        Shape {
+            bits: [0x000000000010000F, 0x0000000000000000],
+            attachments: &[0, 3, 20],
+            width: 3
+        },
+        Shape {
+            bits: [0x000000000080000F, 0x0000000000000000],
+            attachments: &[0, 3, 23],
+            width: 3
+        },
+        Shape {
+            bits: [0x0000020000200003, 0x0000000000000002],
+            attachments: &[0, 1, 61],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000010000100003, 0x0000000000000001],
+            attachments: &[0, 1, 60],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000020000200002, 0x0000000000000003],
+            attachments: &[1, 60, 61],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000010000100001, 0x0000000000000003],
+            attachments: &[0, 60, 61],
+            width: 1
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000070000200002, 0x0000000000000000],
+            attachments: &[1, 40, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000020000200007, 0x0000000000000000],
+            attachments: &[0, 2, 41],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000040000700004, 0x0000000000000000],
+            attachments: &[2, 20, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000010000700001, 0x0000000000000000],
+            attachments: &[0, 22, 40],
+            width: 2
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000070000100001, 0x0000000000000000],
+            attachments: &[0, 40, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000070000400004, 0x0000000000000000],
+            attachments: &[2, 40, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000010000100007, 0x0000000000000000],
+            attachments: &[0, 2, 40],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000040000400007, 0x0000000000000000],
+            attachments: &[0, 2, 42],
+            width: 2
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x000000000030000E, 0x0000000000000000],
+            attachments: &[1, 3, 20, 21],
+            width: 3
+        },
+        Shape {
+            bits: [0x0000000000C00007, 0x0000000000000000],
+            attachments: &[0, 2, 22, 23],
+            width: 3
+        },
+        Shape {
+            bits: [0x0000000000E00003, 0x0000000000000000],
+            attachments: &[0, 1, 21, 23],
+            width: 3
+        },
+        Shape {
+            bits: [0x000000000070000C, 0x0000000000000000],
+            attachments: &[2, 3, 20, 22],
+            width: 3
+        },
+        Shape {
+            bits: [0x0000010000300002, 0x0000000000000001],
+            attachments: &[1, 20, 21, 60],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000020000300001, 0x0000000000000002],
+            attachments: &[0, 20, 21, 61],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000030000100001, 0x0000000000000002],
+            attachments: &[0, 40, 41, 61],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000030000200002, 0x0000000000000001],
+            attachments: &[1, 40, 41, 60],
+            width: 1
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000010000700004, 0x0000000000000000],
+            attachments: &[2, 20, 22, 40],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000040000700001, 0x0000000000000000],
+            attachments: &[0, 20, 22, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000030000200006, 0x0000000000000000],
+            attachments: &[1, 2, 40, 41],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000060000200003, 0x0000000000000000],
+            attachments: &[0, 1, 41, 42],
+            width: 2
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x000000000000001F, 0x0000000000000000],
+            attachments: &[0, 4],
+            width: 4
+        },
+        Shape {
+            bits: [0x0000010000100001, 0x0000000000100001],
+            attachments: &[0, 80],
+            width: 0
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000030000300001, 0x0000000000000000],
+            attachments: &[0, 21, 40, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000030000300002, 0x0000000000000000],
+            attachments: &[1, 20, 40, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000010000300003, 0x0000000000000000],
+            attachments: &[0, 1, 21, 40],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000020000300003, 0x0000000000000000],
+            attachments: &[0, 1, 20, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000000000600007, 0x0000000000000000],
+            attachments: &[0, 2, 21, 22],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000300007, 0x0000000000000000],
+            attachments: &[0, 2, 20, 21],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000700006, 0x0000000000000000],
+            attachments: &[1, 2, 20, 22],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000700003, 0x0000000000000000],
+            attachments: &[0, 1, 20, 22],
+            width: 2
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000010000300006, 0x0000000000000000],
+            attachments: &[1, 2, 20, 21, 40],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000040000600003, 0x0000000000000000],
+            attachments: &[0, 1, 21, 22, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000060000300001, 0x0000000000000000],
+            attachments: &[0, 20, 21, 41, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000030000600004, 0x0000000000000000],
+            attachments: &[2, 21, 22, 40, 41],
+            width: 2
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000030000100003, 0x0000000000000000],
+            attachments: &[0, 1, 40, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000030000200003, 0x0000000000000000],
+            attachments: &[0, 1, 40, 41],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000000000500007, 0x0000000000000000],
+            attachments: &[0, 2, 20, 22],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000000000700005, 0x0000000000000000],
+            attachments: &[0, 2, 20, 22],
+            width: 2
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000020000300006, 0x0000000000000000],
+            attachments: &[1, 2, 20, 41],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000020000600003, 0x0000000000000000],
+            attachments: &[0, 1, 22, 41],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000060000300002, 0x0000000000000000],
+            attachments: &[1, 20, 41, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000030000600002, 0x0000000000000000],
+            attachments: &[1, 22, 40, 41],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000010000700002, 0x0000000000000000],
+            attachments: &[1, 20, 22, 40],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000040000700002, 0x0000000000000000],
+            attachments: &[1, 20, 22, 42],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000020000700001, 0x0000000000000000],
+            attachments: &[0, 20, 22, 41],
+            width: 2
+        },
+        Shape {
+            bits: [0x0000020000700004, 0x0000000000000000],
+            attachments: &[2, 20, 22, 41],
+            width: 2
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000020000700002, 0x0000000000000000],
+            attachments: &[1, 20, 22, 41],
+            width: 2
+        },
+    ]
+},
+Piece {
+    orientations: &[
+        Shape {
+            bits: [0x0000000000F00002, 0x0000000000000000],
+            attachments: &[1, 20, 23],
+            width: 3
+        },
+        Shape {
+            bits: [0x0000000000F00004, 0x0000000000000000],
+            attachments: &[2, 20, 23],
+            width: 3
+        },
+        Shape {
+            bits: [0x000000000020000F, 0x0000000000000000],
+            attachments: &[0, 3, 21],
+            width: 3
+        },
+        Shape {
+            bits: [0x000000000040000F, 0x0000000000000000],
+            attachments: &[0, 3, 22],
+            width: 3
+        },
+        Shape {
+            bits: [0x0000020000300002, 0x0000000000000002],
+            attachments: &[1, 20, 61],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000010000300001, 0x0000000000000001],
+            attachments: &[0, 21, 60],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000030000200002, 0x0000000000000002],
+            attachments: &[1, 40, 61],
+            width: 1
+        },
+        Shape {
+            bits: [0x0000030000100001, 0x0000000000000001],
+            attachments: &[0, 41, 60],
+            width: 1
+        },
+    ]
+},
+];
+
+/*
+pub const PIECES: [Piece; 21] = [
     Piece {
         orientations: &[Shape {
             bits: 0x0000000000000001,
@@ -537,6 +1080,7 @@ pub const PIECES: [Piece; 21] = [
         ],
     },
 ];
+*/
 
 /*
 // This was autogenerated. There will likely be more autogenerated code
