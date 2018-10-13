@@ -24,7 +24,7 @@ const HALF_MASK: u64 = 0x000000FFFFFFFFFF;
 
 #[derive(Clone, PartialEq)]
 pub struct BitBoard {
-	blocks: [u64; 7],
+	pub blocks: [u64; 7],
 }
 
 impl BitBoard {
@@ -90,7 +90,7 @@ impl BitBoard {
 			flood |= (block >> 19) & EAST_MASK;
 			prop = ((block >> 39) & FIRST_MASK) | ((block >> 41) & REST_MASK);
 			block = self.blocks[i+1];
-			flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & REST_MASK)) << 42;
+			flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & REST_MASK)) << 40;
 			board.blocks[i] = flood & BOTTOM_MASK & !illegal.blocks[i];
 		}
 
@@ -99,7 +99,7 @@ impl BitBoard {
 		flood |= (block << 19) & WEST_MASK;
 		flood |= (block << 21) & EAST_MASK;
 		flood |= (block >> 19) & EAST_MASK;
-		board.blocks[6] = flood & HALF_MASK & !illegal.blocks[3];
+		board.blocks[6] = flood & HALF_MASK & !illegal.blocks[6];
 
 		board
 	}
@@ -154,8 +154,8 @@ impl BitBoard {
     pub fn display(&self) {
         for block in self.blocks.iter().rev() {
             for y in (if *block == self.blocks[6] { 1 } else { 0 })..3 {
-                for x in 0..14 {
-                    let s = (3 - y) * 14 + x;
+                for x in 0..20 {
+                    let s = (2 - y) * 20 + x;
                     print!("{}", (block >> s) & (1 as u64));
                 }
 

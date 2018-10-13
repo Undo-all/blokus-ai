@@ -66,6 +66,26 @@ fn main() {
 		println!("    ]\n}},");
 	}*/
 
+	/*
+	let mut test = BitBoard::new();
+	test.blocks[6] |= ((1 as u64) << (40 - 6));
+	test.blocks[6] |= ((1 as u64) << (40 - 7));
+	test.blocks[6] |= ((1 as u64) << (20 - 7));
+	test.blocks[6] |= ((1 as u64) << (20 - 7));
+	test.blocks[5] |= ((1 as u64) << (60 - 7));
+	test.blocks[5] |= ((1 as u64) << (60 - 6));
+	//test.blocks[6] |= ((1 as u64) << ( - 7));
+	//test.blocks[6] |= ((1 as u64) << (20 - 6));
+
+	test.display();
+	println!();
+	let illegal = test.illegal(Player::Blue, &[test.clone(), BitBoard::new(), BitBoard::new(), BitBoard::new()]);
+	illegal.display();
+	println!();
+	let corners = test.corners(&illegal);
+	corners.display();
+	*/
+
     loop {
         board.display();
         println!();
@@ -76,7 +96,7 @@ fn main() {
         
         let mut playouts = 0;
 
-        while (SystemTime::now().duration_since(start).unwrap().as_secs() < 5) {
+        while (SystemTime::now().duration_since(start).unwrap().as_secs() < 1) {
             for _ in 0..100 {
                 node.step(&mut rng);
             }

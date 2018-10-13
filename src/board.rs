@@ -25,7 +25,7 @@ impl Board {
             let start = match player {
                 Player::Blue => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 0, &BitBoard::new()).unwrap(),
                 Player::Yellow => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 19, &BitBoard::new()).unwrap(),
-                Player::Red => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 381, &BitBoard::new()).unwrap(),
+                Player::Red => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 380, &BitBoard::new()).unwrap(),
                 Player::Green => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 399, &BitBoard::new()).unwrap(),
             };
 
