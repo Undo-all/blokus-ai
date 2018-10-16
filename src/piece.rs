@@ -1,5 +1,6 @@
 use shape::Shape;
 
+#[derive(Debug)]
 pub struct Piece {
     pub orientations: &'static [Shape],
 }

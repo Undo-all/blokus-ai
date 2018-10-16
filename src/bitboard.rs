@@ -90,7 +90,7 @@ impl BitBoard {
 			flood |= (block >> 19) & EAST_MASK;
 			prop = ((block >> 39) & FIRST_MASK) | ((block >> 41) & REST_MASK);
 			block = self.blocks[i+1];
-			flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & REST_MASK)) << 40;
+			flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & EAST_MASK)) << 40;
 			board.blocks[i] = flood & BOTTOM_MASK & !illegal.blocks[i];
 		}
 
@@ -121,6 +121,10 @@ impl BitBoard {
         if (index % 20) + (shape.width as usize) >= 20 {
             return None;
         }
+
+		if index + (shape.height as usize) * 20 >= 400 {
+			return None;
+		}
 
         let mut copy = self.clone();
 

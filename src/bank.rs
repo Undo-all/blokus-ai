@@ -5,7 +5,7 @@ use std::intrinsics;
 
 #[derive(Clone)]
 pub struct Bank {
-    pieces: u32,
+    pub pieces: u32,
 }
 
 impl Bank {
@@ -14,6 +14,10 @@ impl Bank {
             pieces: 0x00000000001FFFFF,
         }
     }
+
+	pub fn take(&mut self, piece: usize) {
+		self.pieces &= !(1 << piece);
+	}
 
     pub fn take_iter(&self) -> TakeIter {
         TakeIter {

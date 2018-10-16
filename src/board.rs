@@ -1,12 +1,13 @@
 use bank::*;
 use bitboard::*;
 use rand::Rng;
+use player;
 use player::Player;
 use pieces;
 
 #[derive(Clone)]
 pub struct Board {
-    placed: [BitBoard; 4],
+    pub placed: [BitBoard; 4],
     banks: [Bank; 4],
 }
 
@@ -18,15 +19,15 @@ impl Board {
         }
     }
 
-    pub fn find_moves(&mut self, player: Player) -> Vec<Board> {
+    pub fn find_moves(&self, player: Player) -> Vec<Board> {
         let board = &self.placed[player as usize];
         
         let (corners, illegal) = if board.is_empty() {
             let start = match player {
                 Player::Blue => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 0, &BitBoard::new()).unwrap(),
-                Player::Yellow => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 19, &BitBoard::new()).unwrap(),
-                Player::Red => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 380, &BitBoard::new()).unwrap(),
-                Player::Green => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 399, &BitBoard::new()).unwrap(),
+                Player::Yellow => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 380, &BitBoard::new()).unwrap(),
+                Player::Red => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 399, &BitBoard::new()).unwrap(),
+                Player::Green => BitBoard::new().place_shape(&pieces::iter().nth(0).unwrap().orientations[0], &0, 19, &BitBoard::new()).unwrap(),
             };
 
             (start, BitBoard::new())
@@ -65,20 +66,30 @@ impl Board {
         }
     }
 
-	pub fn find_winner(&self) -> Option<Player> {	
-		let winner = if self.is_winner(Player::Blue) {
-			Some(Player::Blue)
-		} else if self.is_winner(Player::Yellow) {
-			Some(Player::Yellow)
-		} else if self.is_winner(Player::Red) {
-			Some(Player::Red)
-		} else if self.is_winner(Player::Yellow) {
-			Some(Player::Yellow)
-		} else {
-			None
-		};
+	pub fn find_wins(&self) -> [f64; 4] {	
+		let mut winning_score = 0;
+		let mut occurances = 0;
+		
+		let mut turn = Player::Blue;
+		for turn in player::iter() {
+			let score = self.score(turn);
+			if score > winning_score {
+				winning_score = score;
+				occurances = 1;
+			} else if score == winning_score {
+				occurances += 1;
+			}
+		}
+	
+		let mut wins: [f64; 4] = [0.0, 0.0, 0.0, 0.0];	
 
-		winner
+		for turn in player::iter() {
+			if self.score(turn) == winning_score {
+				wins[turn as usize] += 1.0 / (occurances as f64);
+			}
+		}
+
+		wins
 	}
 
     pub fn display(&self) {
@@ -107,19 +118,6 @@ impl Board {
 
     pub fn score(&self, player: Player) -> usize {
         self.placed[player as usize].count_tiles()
-    }
-
-    pub fn is_winner(&self, player: Player) -> bool {
-		let mut turn = player;
-		let score = self.score(player);
-		for _ in 0..3 {
-			turn = turn.next();
-			if self.score(turn) > score {
-				return false;
-			}
-		}
-
-		true
     }
 }
 

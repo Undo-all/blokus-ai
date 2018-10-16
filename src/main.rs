@@ -1,7 +1,10 @@
 #![feature(nll)]
 #![feature(core_intrinsics)]
+#![feature(duration_as_u128)]
+#![feature(test)]
 
 extern crate rand;
+extern crate test;
 
 mod bitboard;
 mod piece;
@@ -17,100 +20,89 @@ use player::*;
 use board::*;
 use mcts::*;
 use player_set::*;
-
 use bitboard::*;
 
 use std::time::SystemTime;
 
 use rand::{rngs::SmallRng, FromEntropy, Rng};
 
-use pieces::*;
+use shape::*;
 
 fn main() {
+	let mut test = Vec::new();
+	for piece in pieces::iter() {
+		test.push(piece);
+	}
+
+	let size = |s: &Shape| { (s.bits[0].count_ones() + s.bits[1].count_ones()) as usize };
+	test.sort_by(|a, b| size(&a.orientations[0]).cmp(&size(&b.orientations[0])));
+	println!("{:#?}", test);
+/*
     let mut board = Board::new();
     let mut rng = SmallRng::from_entropy();
     let mut turn = Player::Blue;
 	
-	/*
-	for piece in pieces::PIECES.iter() {
-		print!("Piece {{\n    orientations: &[\n");
-		for shape in piece.orientations {
-			let mut new_attach: Vec<u8> = Vec::new();
-			for attach in shape.attachments.iter() {
-				let x = attach % 14;
-				let y = attach / 14;
-				new_attach.push(y*20 + x);
-			}
-			
-			let mut new_bits: [u64; 2] = [0, 0];
-			for i in 0..64 {
-				if ((shape.bits >> i) & 1) == 1 {
-					let x = i % 14;
-					let y = i / 14;
-					let shift = y*20 + x;
-					let block = shift / 60;
-					let index = shift % 60;
-					new_bits[block] |= (1 as u64) << index;
-				}
-			}
-
-			print!("        Shape: {{\n            bits: &[0x{0:016X}, 0x{1:016X}],\n            attachments: &[", new_bits[0], new_bits[1]);
-			print!("{0}", new_attach[0]);
-			for attach in new_attach.iter().skip(1) {
-				print!(", {0}", attach)
-			}
-
-			println!("],\n            width: {0}\n        }},", shape.width);
+    loop {
+		if out.is_full() {
+			break;
 		}
 
-		println!("    ]\n}},");
-	}*/
+		if out.contains(turn) {
+			turn = turn.next();
+			continue;
+		}
 
-	/*
-	let mut test = BitBoard::new();
-	test.blocks[6] |= ((1 as u64) << (40 - 6));
-	test.blocks[6] |= ((1 as u64) << (40 - 7));
-	test.blocks[6] |= ((1 as u64) << (20 - 7));
-	test.blocks[6] |= ((1 as u64) << (20 - 7));
-	test.blocks[5] |= ((1 as u64) << (60 - 7));
-	test.blocks[5] |= ((1 as u64) << (60 - 6));
-	//test.blocks[6] |= ((1 as u64) << ( - 7));
-	//test.blocks[6] |= ((1 as u64) << (20 - 6));
+		if board.find_moves(turn).is_empty() {
+			out = out.add(turn);
+		}
 
-	test.display();
-	println!();
-	let illegal = test.illegal(Player::Blue, &[test.clone(), BitBoard::new(), BitBoard::new(), BitBoard::new()]);
-	illegal.display();
-	println!();
-	let corners = test.corners(&illegal);
-	corners.display();
-	*/
+		/*if turn != Player::Blue {
+			board.play_randomly(turn, &mut rng);
+			board.display();
+			turn = turn.next();
+			println!();
+			continue;
+		}*/
 
-    loop {
-        board.display();
-        println!();
+        /*board.display();
+        println!();*/
 
-        let mut node = Node::new(board, turn, PlayerSet::new());
+        let mut node = Node::new(board.clone(), turn, out.clone());
+
         if node.is_terminal() { break; }
         let start = SystemTime::now();
         
-        let mut playouts = 0;
-
+		let mut count = 0;
         while (SystemTime::now().duration_since(start).unwrap().as_secs() < 1) {
             for _ in 0..100 {
                 node.step(&mut rng);
             }
 
-            playouts += 100;
+			count += 100;
         }
-
-        println!("{}", playouts);
 
         if node.is_terminal() {
             break;
         }
 
-        board = node.best_child().board.clone();
+		match turn {
+			Player::Blue => print!("Blue"),
+			Player::Yellow => print!("Yellow"),
+			Player::Red => print!("Red"),
+			Player::Green => print!("Green"),
+		}
+
+		println!(" ({})", count);
+
+        board = node.best_child(&mut rng).board.clone();
+		board.display();
+		println!();
+		// out = node.out.clone();
         turn = turn.next();
+		
+		count += 1;
     }
+
+	println!("{:?}", board.find_wins());
+	*/
 }
