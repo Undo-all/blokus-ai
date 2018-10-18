@@ -1,18 +1,10 @@
 use std::intrinsics;
 
-use shape::Shape;
 use player::Player;
+use shape::Shape;
 
-/*
-const BOTTOM_MASK: u64 = 0x00FFFFFFFFFFFFFF;
-const ROW_MASK: u64 = 0x0000000000003FFF;
-// One of these may be incorrect.
-const EAST_MASK: u64 = 0xFFFFFBFFEFFFBFFE;
-const WEST_MASK: u64 = 0xFF7FFDFFF7FFDFFF;
-const FIRST_MASK: u64 = 0x0000000000003FFE;
-const REST_MASK: u64 = 0x0000000000001FFF;
-const HALF_MASK: u64 = 0x000000000FFFFFFF;
-*/
+// TODO: Use 128-bit integers instead? I'm unsure of its effect on performance, but it would
+// significantly simplify placing shapes correctly.
 
 const WEST_MASK: u64 = 0x07FFFF7FFFF7FFFF;
 const EAST_MASK: u64 = 0x0FFFFEFFFFEFFFFE;
@@ -24,86 +16,86 @@ const HALF_MASK: u64 = 0x000000FFFFFFFFFF;
 
 #[derive(Clone, PartialEq)]
 pub struct BitBoard {
-	pub blocks: [u64; 7],
+    pub blocks: [u64; 7],
 }
 
 impl BitBoard {
-	pub fn new() -> Self {
-		BitBoard {
-			blocks: [0, 0, 0, 0, 0, 0, 0]
-		}
-	}
+    pub fn new() -> Self {
+        BitBoard {
+            blocks: [0, 0, 0, 0, 0, 0, 0],
+        }
+    }
 
-	pub fn illegal(&self, player: Player, boards: &[BitBoard; 4]) -> Self {
-		let mut enemy = BitBoard::new();
-		let mut turn = player;
-		for _ in 0..3 {
-			turn = turn.next();
-			for i in 0..7 {
-				enemy.blocks[i] |= boards[turn as usize].blocks[i];
-			}
-		}
+    pub fn illegal(&self, player: Player, boards: &[BitBoard; 4]) -> Self {
+        let mut enemy = BitBoard::new();
+        let mut turn = player;
+        for _ in 0..3 {
+            turn = turn.next();
+            for i in 0..7 {
+                enemy.blocks[i] |= boards[turn as usize].blocks[i];
+            }
+        }
 
-		let enemy = enemy;
-		
-		let mut board = self.clone();
+        let enemy = enemy;
 
-		let mut block = self.blocks[0];
-		let mut flood = 0;
-		let mut prop = 0;
+        let mut board = self.clone();
 
-		// TODO: Manually unroll
-		for i in 0..6 {
-			flood = prop;
-			flood |= (block >> 1) & WEST_MASK;
-			flood |= (block << 1) & EAST_MASK;
-			flood |= block >> 20;
-			flood |= block << 20;
-			prop = block >> 40;
-			block = self.blocks[i+1];
-			flood |= (block & ROW_MASK) << 40;
+        let mut block = self.blocks[0];
+        let mut flood;
+        let mut prop = 0;
 
-			board.blocks[i] |= (flood & BOTTOM_MASK) | enemy.blocks[i];
-		}
+        // TODO: Manually unroll
+        for i in 0..6 {
+            flood = prop;
+            flood |= (block >> 1) & WEST_MASK;
+            flood |= (block << 1) & EAST_MASK;
+            flood |= block >> 20;
+            flood |= block << 20;
+            prop = block >> 40;
+            block = self.blocks[i + 1];
+            flood |= (block & ROW_MASK) << 40;
 
-		flood = prop;
-		flood |= (block >> 1) & WEST_MASK;
-		flood |= (block << 1) & EAST_MASK;
-		flood |= block << 20;
-		flood |= block >> 20;
-		
-		board.blocks[6] |= (flood & HALF_MASK) | enemy.blocks[6];
-		board
-	}
+            board.blocks[i] |= (flood & BOTTOM_MASK) | enemy.blocks[i];
+        }
 
-	pub fn corners(&self, illegal: &BitBoard) -> Self {
-		let mut board = BitBoard::new();
-		let mut block = self.blocks[0];
-		let mut flood = 0;
-		let mut prop = 0;
+        flood = prop;
+        flood |= (block >> 1) & WEST_MASK;
+        flood |= (block << 1) & EAST_MASK;
+        flood |= block << 20;
+        flood |= block >> 20;
 
-		for i in 0..6 {
-			flood = prop;
-			flood |= (block >> 21) & WEST_MASK;
-			flood |= (block << 19) & WEST_MASK;
-			flood |= (block << 21) & EAST_MASK;
-			flood |= (block >> 19) & EAST_MASK;
-			prop = ((block >> 39) & FIRST_MASK) | ((block >> 41) & REST_MASK);
-			block = self.blocks[i+1];
-			flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & EAST_MASK)) << 40;
-			board.blocks[i] = flood & BOTTOM_MASK & !illegal.blocks[i];
-		}
+        board.blocks[6] |= (flood & HALF_MASK) | enemy.blocks[6];
+        board
+    }
 
-		flood = prop;
-		flood |= (block >> 21) & WEST_MASK;
-		flood |= (block << 19) & WEST_MASK;
-		flood |= (block << 21) & EAST_MASK;
-		flood |= (block >> 19) & EAST_MASK;
-		board.blocks[6] = flood & HALF_MASK & !illegal.blocks[6];
+    pub fn corners(&self, illegal: &BitBoard) -> Self {
+        let mut board = BitBoard::new();
+        let mut block = self.blocks[0];
+        let mut flood;
+        let mut prop = 0;
 
-		board
-	}
-	
+        for i in 0..6 {
+            flood = prop;
+            flood |= (block >> 21) & WEST_MASK;
+            flood |= (block << 19) & WEST_MASK;
+            flood |= (block << 21) & EAST_MASK;
+            flood |= (block >> 19) & EAST_MASK;
+            prop = ((block >> 39) & FIRST_MASK) | ((block >> 41) & REST_MASK);
+            block = self.blocks[i + 1];
+            flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & EAST_MASK)) << 40;
+            board.blocks[i] = flood & BOTTOM_MASK & !illegal.blocks[i];
+        }
+
+        flood = prop;
+        flood |= (block >> 21) & WEST_MASK;
+        flood |= (block << 19) & WEST_MASK;
+        flood |= (block << 21) & EAST_MASK;
+        flood |= (block >> 19) & EAST_MASK;
+        board.blocks[6] = flood & HALF_MASK & !illegal.blocks[6];
+
+        board
+    }
+
     pub fn count_tiles(&self) -> usize {
         self.blocks
             .iter()
@@ -111,7 +103,15 @@ impl BitBoard {
             .sum()
     }
 
-    pub fn place_shape(&self, shape: &Shape, attachment: &u8, at: usize, illegal: &BitBoard) -> Option<Self> {
+    // TODO: Place the 5-long block correctly when its attached at the bottom or top edge of a bit
+    // block (fixed by 128-bit integer use).
+    pub fn place_shape(
+        &self,
+        shape: &Shape,
+        attachment: &u8,
+        at: usize,
+        illegal: &BitBoard,
+    ) -> Option<Self> {
         if at < (*attachment as usize) {
             return None;
         }
@@ -122,10 +122,12 @@ impl BitBoard {
             return None;
         }
 
-		if index + (shape.height as usize) * 20 >= 400 {
-			return None;
-		}
+        if index + (shape.height as usize) * 20 >= 400 {
+            return None;
+        }
 
+        // TODO: We're copying more than we need to, earlier than we need to. Make this more
+        // efficient.
         let mut copy = self.clone();
 
         let block = index / 60;
@@ -135,7 +137,7 @@ impl BitBoard {
         if (shifted & illegal.blocks[block]) != 0 {
             return None;
         }
-        
+
         copy.blocks[block] |= shifted & BOTTOM_MASK;
 
         if block == 6 {
@@ -183,11 +185,6 @@ impl BitBoard {
             bits: self.blocks[0],
         }
     }
-}
-
-pub struct BitPosition {
-    pub block: u8,
-    pub shift: u8,
 }
 
 pub struct BitIterator<'a> {

@@ -15,7 +15,7 @@ pub struct Node {
     visits: u32,
     wins: [f64; 4],
     terminal: bool,
-	pub out: PlayerSet,
+    pub out: PlayerSet,
     children: Vec<Node>,
 }
 
@@ -26,10 +26,10 @@ impl Node {
             turn: turn,
             visits: 0,
             //wins: [0, 0, 0, 0],
-			wins: [0.0, 0.0, 0.0, 0.0],
+            wins: [0.0, 0.0, 0.0, 0.0],
             terminal: false,
-			out: out,
-			//out: PlayerSet::new(),
+            out: out,
+            //out: PlayerSet::new(),
             children: Vec::new(),
         }
     }
@@ -46,102 +46,108 @@ impl Node {
         let moves = self.board.find_moves(self.turn);
 
         if moves.is_empty() {
-			let mut out = self.out.add(self.turn);
+            let mut out = self.out.add(self.turn);
 
-			let mut turn = self.turn;
-			for _ in 0..3 {
-				turn = self.turn.next();
-				
-				if out.contains(turn) {
-					continue;
-				}
+            let mut turn = self.turn;
+            for _ in 0..3 {
+                turn = self.turn.next();
 
-				let moves = self.board.find_moves(turn);
-				if moves.is_empty() {
-					out = out.add(turn);
-				} else {
-					self.out = out.clone();
-					for board in moves {
-						//self.children.push(Node::new(board, turn, out.clone()));
-						self.children.push(Node::new(board, turn, PlayerSet::new()));
-					}
+                if out.contains(turn) {
+                    continue;
+                }
 
-					return;
-				}
-			}
-			
-			self.out = out;
-			self.terminal = true;
+                let moves = self.board.find_moves(turn);
+                if moves.is_empty() {
+                    out = out.add(turn);
+                } else {
+                    self.out = out.clone();
+                    for board in moves {
+                        //self.children.push(Node::new(board, turn, out.clone()));
+                        self.children.push(Node::new(board, turn, PlayerSet::new()));
+                    }
+
+                    return;
+                }
+            }
+
+            self.out = out;
+            self.terminal = true;
         } else {
             let next = self.turn.next();
 
-			/*
+            /*
             for board in moves {
                 self.children.push(Node::new(board, turn, self.out.clone()));
             }*/
 
-			for board in moves {
-				self.children.push(Node::new(board.clone(), next, PlayerSet::new()));
-			}
+            for board in moves {
+                self.children
+                    .push(Node::new(board.clone(), next, PlayerSet::new()));
+            }
         }
     }
-    
+
     fn select(&mut self) -> &mut Self {
         let root_visits = self.visits as f64;
-		
+
         let utc = |child: &Node| {
-			let wins = child.wins[self.turn as usize];
+            let wins = child.wins[self.turn as usize];
 
             let visits = (child.visits as f64) + EPSILON;
             let mean = wins / visits;
             mean + EXPLORATION * ((root_visits + 1.0).ln() / visits).sqrt()
         };
 
-		let index = {
-			let (i, n) = self.children.iter().enumerate().max_by(|(i, a), (j, b)| utc(a).partial_cmp(&utc(b)).unwrap()).unwrap();
-			i
-		};
-			
-		&mut self.children[index]
+        let index = {
+            let (i, _) = self
+                .children
+                .iter()
+                .enumerate()
+                .max_by(|(_, a), (_, b)| utc(a).partial_cmp(&utc(b)).unwrap())
+                .unwrap();
+            i
+        };
+
+        &mut self.children[index]
         //self.children.iter_mut().max_by(|a, b| utc(a.wins[self.turn as usize] as f32, a.visits as f32).partial_cmp(&utc(b.wins[self.turn as usize] as f32, b.visits as f32)).unwrap()).unwrap()
     }
-    
+
     fn playout<R: Rng>(&mut self, rng: &mut R) -> [f64; 4] {
-		self.visits += 1;
+        self.visits += 1;
 
         let mut turn = self.turn;
         let mut board = self.board.clone();
-		let mut out = PlayerSet::new();
+        let mut out = PlayerSet::new();
 
-		while !out.is_full() {
-			if out.contains(turn) {
-				turn = turn.next();
-				continue;
-			}
+        while !out.is_full() {
+            if out.contains(turn) {
+                turn = turn.next();
+                continue;
+            }
 
-			if !board.play_randomly(turn, rng) {
-				out = out.add(turn);
-			}
+            if !board.play_randomly(turn, rng) {
+                out = out.add(turn);
+            }
 
-			turn = turn.next();
-		}
+            turn = turn.next();
+        }
 
-		let wins = self.board.find_wins();
-		for turn in player::iter() {
-			self.wins[turn as usize] += wins[turn as usize];
-		}
+        let wins = self.board.find_wins();
+        for turn in player::iter() {
+            self.wins[turn as usize] += wins[turn as usize];
+        }
 
         wins
     }
 
     pub fn step<R: Rng>(&mut self, rng: &mut R) -> [f64; 4] {
-		self.visits += 1;
+        self.visits += 1;
 
         if self.is_leaf() {
             self.expand();
         }
 
-		/*
+        /*
         if self.terminal {
             return if self.board.is_winner(self.turn) {
                 true
@@ -153,22 +159,22 @@ impl Node {
         }
 		*/
 
-		if self.terminal {
-			return self.board.find_wins();
-		}
-        
+        if self.terminal {
+            return self.board.find_wins();
+        }
+
         let child = self.select();
         let wins = if child.visits == 0 {
             child.playout(rng)
         } else {
             child.step(rng)
         };
-	
-		for turn in player::iter() {
-			self.wins[turn as usize] += wins[turn as usize];
-		}
-		
-        return wins;
+
+        for turn in player::iter() {
+            self.wins[turn as usize] += wins[turn as usize];
+        }
+
+        wins
     }
 
     pub fn is_terminal(&self) -> bool {
@@ -180,49 +186,66 @@ impl Node {
     }
 
     pub fn best_child<R: Rng>(&self, rng: &mut R) -> &Self {
-		print!("\x1b[s");
-		print!("\x1b[20B");
-		print!("\x1b[21C");
+        print!("\x1b[s");
+        print!("\x1b[20B");
+        print!("\x1b[21C");
 
-		let mut children = self.children.clone();
-		children.sort_by(|a, b| b.visits.cmp(&a.visits));
-		let mut last_visits: i32 = -1;
-		let mut last_wins: f64 = -1.0;
-		let mut counter = 1;
-		let mut lines = 0;
-		for child in children {
-			if lines >= 18 {
-				break;
-			}
+        let mut children = self.children.clone();
+        children.sort_by(|a, b| b.visits.cmp(&a.visits));
+        let mut last_visits: i32 = -1;
+        let mut last_wins: f64 = -1.0;
+        let mut counter = 1;
+        let mut lines = 0;
+        for child in children {
+            if lines >= 18 {
+                break;
+            }
 
-			let visits = child.visits as i32;
-			let wins = child.wins[self.turn as usize];
-			if visits == last_visits && wins == last_wins {
-				counter += 1;
-			} else {
-				if !(last_visits == -1 && last_wins == -1.0) {
-					println!("{:.2}/{} = {:.1}% ({})", last_wins, last_visits, 100.0*last_wins / (last_visits as f64), counter);
-					print!("\x1b[21C");
-					lines += 1;
-					//print!("\x1b[1B")
-				}
-				last_visits = child.visits as i32;
-				last_wins = child.wins[self.turn as usize];
-				counter = 1;
-			}
-		}
+            let visits = child.visits as i32;
+            let wins = child.wins[self.turn as usize];
+            if visits == last_visits && wins == last_wins {
+                counter += 1;
+            } else {
+                if !(last_visits == -1 && last_wins == -1.0) {
+                    println!(
+                        "{:.2}/{} = {:.1}% ({})",
+                        last_wins,
+                        last_visits,
+                        100.0 * last_wins / (last_visits as f64),
+                        counter
+                    );
+                    print!("\x1b[21C");
+                    lines += 1;
+                    //print!("\x1b[1B")
+                }
+                last_visits = child.visits as i32;
+                last_wins = child.wins[self.turn as usize];
+                counter = 1;
+            }
+        }
 
-		println!("{:.2}/{} = {:.1}% ({})", last_wins, last_visits, 100.0*last_wins / (last_visits as f64), counter);
-		lines += 1;
-		print!("\x1b[u");
-		print!("\x1b[{}A", lines);
+        println!(
+            "{:.2}/{} = {:.1}% ({})",
+            last_wins,
+            last_visits,
+            100.0 * last_wins / (last_visits as f64),
+            counter
+        );
+        lines += 1;
+        print!("\x1b[u");
+        print!("\x1b[{}A", lines);
 
-		let best_score = self.children.iter()
-									  .map(|n| (n.visits, n.wins[self.turn as usize]))
-									  .max_by(|a, b| a.partial_cmp(&b).unwrap())
-									  .unwrap();
-		let best: Vec<&Node> = self.children.iter().filter(|n| (n.visits, n.wins[self.turn as usize]) == best_score).collect();
-		*rng.choose(&best).unwrap()
+        let best_score = self
+            .children
+            .iter()
+            .map(|n| (n.visits, n.wins[self.turn as usize]))
+            .max_by(|a, b| a.partial_cmp(&b).unwrap())
+            .unwrap();
+        let best: Vec<&Node> = self
+            .children
+            .iter()
+            .filter(|n| (n.visits, n.wins[self.turn as usize]) == best_score)
+            .collect();
+        *rng.choose(&best).unwrap()
     }
 }
-
