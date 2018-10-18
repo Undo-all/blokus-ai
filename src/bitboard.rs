@@ -3,26 +3,23 @@ use std::intrinsics;
 use player::Player;
 use shape::Shape;
 
-// TODO: Use 128-bit integers instead? I'm unsure of its effect on performance, but it would
-// significantly simplify placing shapes correctly.
-
-const WEST_MASK: u64 = 0x07FFFF7FFFF7FFFF;
-const EAST_MASK: u64 = 0x0FFFFEFFFFEFFFFE;
-const BOTTOM_MASK: u64 = 0x0FFFFFFFFFFFFFFF;
-const ROW_MASK: u64 = 0x00000000000FFFFF;
-const FIRST_MASK: u64 = 0x00000000000FFFFE;
-const REST_MASK: u64 = 0x000000000007FFFF;
-const HALF_MASK: u64 = 0x000000FFFFFFFFFF;
+const WEST_MASK: u128 = 0x007F_FFF7_FFFF_7FFF_F7FF_FF7F_FFF7_FFFF;
+const EAST_MASK: u128 = 0xFEFF_FFEF_FFFE_FFFF_EFFF_FEFF_FFEF_FFFE;
+const BOTTOM_MASK: u128 = 0x00FF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF;
+const ROW_MASK: u128 = 0x0000_0000_0000_0000_0000_0000_000F_FFFF;
+const FIRST_MASK: u128 = 0x0000_0000_0000_0000_0000_0000_000F_FFFE;
+const REST_MASK: u128 = 0x0000_0000_0000_0000_0000_0000_0007_FFFF;
+const HALF_MASK: u128 = 0x0000_0000_0000_0000_0000_00FF_FFFF_FFFF;
 
 #[derive(Clone, PartialEq)]
 pub struct BitBoard {
-    pub blocks: [u64; 7],
+    pub blocks: [u128; 4],
 }
 
 impl BitBoard {
     pub fn new() -> Self {
         BitBoard {
-            blocks: [0, 0, 0, 0, 0, 0, 0],
+            blocks: [0, 0, 0, 0],
         }
     }
 
@@ -31,7 +28,7 @@ impl BitBoard {
         let mut turn = player;
         for _ in 0..3 {
             turn = turn.next();
-            for i in 0..7 {
+            for i in 0..4 {
                 enemy.blocks[i] |= boards[turn as usize].blocks[i];
             }
         }
@@ -45,15 +42,15 @@ impl BitBoard {
         let mut prop = 0;
 
         // TODO: Manually unroll
-        for i in 0..6 {
+        for i in 0..3 {
             flood = prop;
             flood |= (block >> 1) & WEST_MASK;
             flood |= (block << 1) & EAST_MASK;
             flood |= block >> 20;
             flood |= block << 20;
-            prop = block >> 40;
+            prop = block >> 100;
             block = self.blocks[i + 1];
-            flood |= (block & ROW_MASK) << 40;
+            flood |= (block & ROW_MASK) << 100;
 
             board.blocks[i] |= (flood & BOTTOM_MASK) | enemy.blocks[i];
         }
@@ -64,7 +61,7 @@ impl BitBoard {
         flood |= block << 20;
         flood |= block >> 20;
 
-        board.blocks[6] |= (flood & HALF_MASK) | enemy.blocks[6];
+        board.blocks[3] |= (flood & HALF_MASK) | enemy.blocks[3];
         board
     }
 
@@ -74,15 +71,15 @@ impl BitBoard {
         let mut flood;
         let mut prop = 0;
 
-        for i in 0..6 {
+        for i in 0..3 {
             flood = prop;
             flood |= (block >> 21) & WEST_MASK;
             flood |= (block << 19) & WEST_MASK;
             flood |= (block << 21) & EAST_MASK;
             flood |= (block >> 19) & EAST_MASK;
-            prop = ((block >> 39) & FIRST_MASK) | ((block >> 41) & REST_MASK);
+            prop = ((block >> 99) & FIRST_MASK) | ((block >> 101) & REST_MASK);
             block = self.blocks[i + 1];
-            flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & EAST_MASK)) << 40;
+            flood |= (((block >> 1) & WEST_MASK) | ((block << 1) & EAST_MASK)) << 100;
             board.blocks[i] = flood & BOTTOM_MASK & !illegal.blocks[i];
         }
 
@@ -91,7 +88,7 @@ impl BitBoard {
         flood |= (block << 19) & WEST_MASK;
         flood |= (block << 21) & EAST_MASK;
         flood |= (block >> 19) & EAST_MASK;
-        board.blocks[6] = flood & HALF_MASK & !illegal.blocks[6];
+        board.blocks[3] = flood & HALF_MASK & !illegal.blocks[3];
 
         board
     }
@@ -130,24 +127,24 @@ impl BitBoard {
         // efficient.
         let mut copy = self.clone();
 
-        let block = index / 60;
-        let shift = index % 60;
+        let block = index / 120;
+        let shift = index % 120;
 
-        let shifted = shape.bits[0] << shift;
+        let shifted = shape.bits << shift;
         if (shifted & illegal.blocks[block]) != 0 {
             return None;
         }
 
         copy.blocks[block] |= shifted & BOTTOM_MASK;
 
-        if block == 6 {
+        if block == 3 {
             if (shifted & HALF_MASK) != shifted {
                 None
             } else {
                 Some(copy)
             }
         } else {
-            let shifted = (shape.bits[0] >> (60 - shift)) | (shape.bits[1] << shift);
+            let shifted = shape.bits >> (120 - shift);
             if (shifted & illegal.blocks[block + 1]) != 0 {
                 None
             } else {
@@ -159,10 +156,10 @@ impl BitBoard {
 
     pub fn display(&self) {
         for block in self.blocks.iter().rev() {
-            for y in (if *block == self.blocks[6] { 1 } else { 0 })..3 {
+            for y in (if *block == self.blocks[3] { 4 } else { 0 })..6 {
                 for x in 0..20 {
-                    let s = (2 - y) * 20 + x;
-                    print!("{}", (block >> s) & (1 as u64));
+                    let s = (5 - y) * 20 + x;
+                    print!("{}", (block >> s) & (1 as u128));
                 }
 
                 println!();
@@ -171,7 +168,7 @@ impl BitBoard {
     }
 
     pub fn is_occupied(&self, at: usize) -> bool {
-        ((self.blocks[at / 60] >> (at % 60)) & 1) == 1
+        ((self.blocks[at / 120] >> (at % 120)) & 1) == 1
     }
 
     pub fn is_empty(&self) -> bool {
@@ -189,8 +186,8 @@ impl BitBoard {
 
 pub struct BitIterator<'a> {
     block: u8,
-    blocks: &'a [u64; 7],
-    bits: u64,
+    blocks: &'a [u128; 4],
+    bits: u128,
 }
 
 impl<'a> BitIterator<'a> {
@@ -210,16 +207,16 @@ impl<'a> Iterator for BitIterator<'a> {
         loop {
             let index = unsafe { intrinsics::cttz(self.bits) };
 
-            if index == 64 {
-                if self.block == 6 {
+            if index == 128 {
+                if self.block == 3 {
                     return None;
                 } else {
                     self.block += 1;
                     self.bits = self.blocks[self.block as usize];
                 }
             } else {
-                self.bits &= !((1 as u64) << index);
-                return Some((self.block as usize) * 60 + (index as usize));
+                self.bits &= !((1 as u128) << index);
+                return Some((self.block as usize) * 120 + (index as usize));
             }
         }
     }

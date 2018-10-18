@@ -30,42 +30,19 @@ use shape::*;
 
 fn main() {
     /*
-    let mut board = BitBoard::new();
-    let enemies = [BitBoard::new(), BitBoard::new(), BitBoard::new(), BitBoard::new()];
-    board.blocks[3] = (1 as u64) << 30;
-    let illegal = board.illegal(Player::Blue, &enemies);
-
-    board.display();
-    println!();
-    illegal.display();
-    println!();
-
-    let mut oriented = [Vec::new(), Vec::new(), Vec::new(), Vec::new()];
-
-    let corners = board.corners(&illegal);
-    let mut counter = 0;
-
-
-    for (i, corner) in corners.iter().enumerate() {
-        for (piece_id, piece) in pieces::iter().enumerate() {
-            for (orientation_id, orientation) in piece.orientations.iter().enumerate() {
-                for (attachment_id, attachment) in orientation.attachments.iter().enumerate() {
-                    if board.place_shape(orientation, attachment, corner, &illegal).is_some() {
-                        let placement = Placement {
-                            piece: piece_id as u8,
-                            orientation: orientation_id as u8,
-                            attachment: attachment_id as u8,
-                        };
-
-                        oriented[i].push(placement);
-                    }
-                }
-            }
+    for piece in pieces::iter() {
+        print!("Piece{{orientations:&[");
+        for orientation in piece.orientations {
+            let mut bits: u128 = 0;
+            bits |= (orientation.bits[0] as u128);
+            bits |= (orientation.bits[1] as u128) << 60;
+            print!(
+                "Shape {{bits:0x{:032X},attachments:&{:?},width:{},height:{}}},",
+                bits, orientation.attachments, orientation.width, orientation.height
+            );
         }
-    }
-
-    println!("pub const PLACEMENTS: [[Placement; 127]; 4] = {:#?}", oriented);
-    */
+        print!("]}},")
+    }*/
 
     let mut board = Board::new();
     let mut rng = SmallRng::from_entropy();
@@ -105,7 +82,7 @@ fn main() {
         let start = SystemTime::now();
 
         let mut count = 0;
-        while SystemTime::now().duration_since(start).unwrap().as_secs() < 5 {
+        while SystemTime::now().duration_since(start).unwrap().as_secs() < 1 {
             for _ in 0..100 {
                 node.step(&mut rng);
             }
