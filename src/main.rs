@@ -15,6 +15,7 @@ mod pieces;
 mod player;
 mod player_set;
 mod shape;
+mod placement;
 
 use bitboard::*;
 use board::*;

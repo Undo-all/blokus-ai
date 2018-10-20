@@ -63,9 +63,11 @@ impl Node {
                     out = out.add(turn);
                 } else {
                     self.out = out.clone();
-                    for board in moves {
+                    for placement in moves {
+                        let mut after = self.board.clone();
+                        after.perform_placement(&placement, self.turn);
                         //self.children.push(Node::new(board, turn, out.clone()));
-                        self.children.push(Node::new(board, turn, PlayerSet::new()));
+                        self.children.push(Node::new(after, turn, PlayerSet::new()));
                     }
 
                     return;
@@ -82,9 +84,11 @@ impl Node {
                 self.children.push(Node::new(board, turn, self.out.clone()));
             }*/
 
-            for board in moves {
+            for placement in moves {
+                let mut after = self.board.clone();
+                after.perform_placement(&placement, self.turn);
                 self.children
-                    .push(Node::new(board.clone(), next, PlayerSet::new()));
+                    .push(Node::new(after, next, PlayerSet::new()));
             }
         }
     }
@@ -178,7 +182,7 @@ impl Node {
         } else {
             child.step(rng)
         };
-    
+
         self.visits += 1;
 
         for turn in player::iter() {

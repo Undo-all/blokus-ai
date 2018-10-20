@@ -2,6 +2,8 @@ use std::intrinsics;
 
 use player::Player;
 use shape::Shape;
+use placement::Placement;
+use pieces;
 
 const WEST_MASK: u128 = 0x007F_FFF7_FFFF_7FFF_F7FF_FF7F_FFF7_FFFF;
 const EAST_MASK: u128 = 0xFEFF_FFEF_FFFE_FFFF_EFFF_FEFF_FFEF_FFFE;
@@ -98,6 +100,61 @@ impl BitBoard {
             .iter()
             .map(|&block| unsafe { intrinsics::ctpop(block) as usize })
             .sum()
+    }
+
+    pub fn place(&mut self, placement: &Placement) {
+        let shape = &pieces::PIECES[placement.piece()].orientations[placement.orientation()];
+        let shift = placement.shift();
+        let shifted = shape.bits << placement.shift();
+        let block = placement.block();
+        if block == 3 {
+            self.blocks[block] |= shifted & HALF_MASK;
+        } else {
+            self.blocks[block] |= shifted & BOTTOM_MASK;
+            let shifted = shape.bits >> (120 - shift);
+            self.blocks[block + 1] |= shifted & BOTTOM_MASK;
+        }
+    }
+
+    pub fn make_placement(&self, piece_id: usize, shape: &Shape, orientation_id: usize, attachment: u8, at: usize, illegal: &BitBoard) -> Option<Placement> {
+        if at < (attachment as usize) {
+            return None;
+        }
+
+        let index = at - (attachment as usize);
+
+        if (index % 20) + (shape.width as usize) >= 20 {
+            return None;
+        }
+
+        if index + (shape.height as usize) * 20 >= 400 {
+            return None;
+        }
+
+        let block = index / 120;
+        let shift = index % 120;
+
+        let placement = Placement::new(block, shift, piece_id, orientation_id);
+
+        let shifted = shape.bits << shift;
+        if (shifted & illegal.blocks[block]) != 0 {
+            return None;
+        }
+
+        if block == 3 {
+            if (shifted & HALF_MASK) != shifted {
+                None
+            } else {
+                Some(placement)
+            }
+        } else {
+            let shifted = shape.bits >> (120 - shift);
+            if (shifted & illegal.blocks[block + 1]) != 0 {
+                None
+            } else {
+                Some(placement)
+            }
+        }
     }
 
     pub fn place_shape(

@@ -4,6 +4,7 @@ use pieces;
 use player;
 use player::Player;
 use rand::Rng;
+use placement::*;
 
 #[derive(Clone)]
 pub struct Board {
@@ -24,7 +25,7 @@ impl Board {
         }
     }
 
-    pub fn find_moves(&self, player: Player) -> Vec<Board> {
+    pub fn find_moves(&self, player: Player) -> Vec<Placement> {
         let board = &self.placed[player as usize];
 
         let (corners, illegal) = if board.is_empty() {
@@ -69,16 +70,13 @@ impl Board {
         let bank = &self.banks[player as usize];
 
         for corner in corners.iter() {
-            for (piece, taken) in bank.take_iter() {
-                for orientation in piece.orientations.iter() {
+            for (piece, piece_id) in bank.take_iter() {
+                for (orientation_id, orientation) in piece.orientations.iter().enumerate() {
                     for attachment in orientation.attachments.iter() {
-                        if let Some(after) =
-                            board.place_shape(orientation, attachment, corner, &illegal)
+                        if let Some(placement) =
+                            board.make_placement(piece_id, orientation, orientation_id, *attachment, corner, &illegal)
                         {
-                            let mut copy = self.clone();
-                            copy.placed[player as usize] = after;
-                            copy.banks[player as usize] = taken.clone();
-                            moves.push(copy);
+                            moves.push(placement);
                         }
                     }
                 }
@@ -88,12 +86,19 @@ impl Board {
         moves
     }
 
+    pub fn perform_placement(&mut self, placement: &Placement, player: Player) {
+        self.placed[player as usize].place(placement);
+        self.banks[player as usize].take(placement.piece());
+    }
+
     pub fn play_randomly<R: Rng>(&mut self, player: Player, rng: &mut R) -> bool {
         let moves = self.find_moves(player);
         if moves.is_empty() {
             false
         } else {
-            *self = rng.choose(&moves).unwrap().clone();
+            let placement = rng.choose(&moves).unwrap().clone();
+            self.perform_placement(placement, player);
+
             true
         }
     }

@@ -15,10 +15,8 @@ impl Bank {
         }
     }
 
-    pub fn take(&mut self, piece: usize) -> Self {
-        let mut copy = self.clone();
-        copy.pieces &= !(1 << piece);
-        copy
+    pub fn take(&mut self, piece: usize) {
+        self.pieces &= !(1 << piece);
     }
 
     pub fn take_iter(&self) -> TakeIter {
@@ -35,16 +33,15 @@ pub struct TakeIter {
 }
 
 impl iter::Iterator for TakeIter {
-    type Item = (&'static Piece, Bank);
+    type Item = (&'static Piece, usize);
 
-    fn next(&mut self) -> Option<(&'static Piece, Bank)> {
+    fn next(&mut self) -> Option<(&'static Piece, usize)> {
         if self.remaining == 0 {
             None
         } else {
             let piece = unsafe { intrinsics::cttz(self.remaining) as usize };
             self.remaining &= !(1 << piece);
-            let copy = self.pieces & !(1 << piece);
-            Some((pieces::by_id(piece as PieceId), Bank { pieces: copy }))
+            Some((pieces::by_id(piece as PieceId), piece))
         }
     }
 }
