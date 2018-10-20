@@ -100,8 +100,6 @@ impl BitBoard {
             .sum()
     }
 
-    // TODO: Place the 5-long block correctly when its attached at the bottom or top edge of a bit
-    // block (fixed by 128-bit integer use).
     pub fn place_shape(
         &self,
         shape: &Shape,

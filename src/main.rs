@@ -47,6 +47,7 @@ fn main() {
     let mut board = Board::new();
     let mut rng = SmallRng::from_entropy();
     let mut turn = Player::Blue;
+
     let mut out = PlayerSet::new();
 
     loop {
@@ -82,7 +83,7 @@ fn main() {
         let start = SystemTime::now();
 
         let mut count = 0;
-        while SystemTime::now().duration_since(start).unwrap().as_secs() < 1 {
+        while SystemTime::now().duration_since(start).unwrap().as_secs() < 5 {
             for _ in 0..100 {
                 node.step(&mut rng);
             }

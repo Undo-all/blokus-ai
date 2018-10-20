@@ -401,7 +401,7 @@ pub const PIECES: [Piece; 21] = [
                 height: 0,
             },
             Shape {
-                bits: 0x00000010000100001000010000100001,
+                bits: 0x00000000000100001000010000100001,
                 attachments: &[0, 80],
                 width: 0,
                 height: 4,

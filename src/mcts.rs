@@ -46,7 +46,9 @@ impl Node {
         let moves = self.board.find_moves(self.turn);
 
         if moves.is_empty() {
-            let mut out = self.out.add(self.turn);
+            //let mut out = self.out.add(self.turn);
+            let mut out = PlayerSet::new();
+            out = out.add(self.turn);
 
             let mut turn = self.turn;
             for _ in 0..3 {
@@ -141,7 +143,7 @@ impl Node {
     }
 
     pub fn step<R: Rng>(&mut self, rng: &mut R) -> [f64; 4] {
-        self.visits += 1;
+        //self.visits += 1;
 
         if self.is_leaf() {
             self.expand();
@@ -160,7 +162,14 @@ impl Node {
 		*/
 
         if self.terminal {
-            return self.board.find_wins();
+            self.visits = 1;
+            let wins = self.board.find_wins();
+            /*
+            for turn in player::iter() {
+                self.wins[turn as usize] += wins[turn as usize];
+            }*/
+
+            return wins;
         }
 
         let child = self.select();
@@ -169,6 +178,8 @@ impl Node {
         } else {
             child.step(rng)
         };
+    
+        self.visits += 1;
 
         for turn in player::iter() {
             self.wins[turn as usize] += wins[turn as usize];
