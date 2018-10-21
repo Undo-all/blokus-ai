@@ -96,7 +96,7 @@ impl Board {
         if moves.is_empty() {
             false
         } else {
-            let placement = rng.choose(&moves).unwrap().clone();
+            let placement = rng.choose(&moves).unwrap();
             self.perform_placement(placement, player);
 
             true

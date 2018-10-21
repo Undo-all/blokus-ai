@@ -230,7 +230,7 @@ impl BitBoard {
         self.blocks.iter().all(|&b| b == 0)
     }
 
-    pub fn iter(&self) -> BitIterator {
+    pub fn iter(&self) -> BitIterator<'_> {
         BitIterator {
             block: 0,
             blocks: &self.blocks,

@@ -3,8 +3,8 @@
 #![feature(duration_as_u128)]
 #![feature(test)]
 
-extern crate rand;
-extern crate test;
+
+
 
 mod bank;
 mod bitboard;
