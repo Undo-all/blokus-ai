@@ -1,7 +1,7 @@
-use board::*;
-use player;
-use player::*;
-use player_set::*;
+use crate::board::*;
+use crate::player;
+use crate::player::*;
+use crate::player_set::*;
 
 use rand::Rng;
 

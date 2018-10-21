@@ -1,4 +1,4 @@
-use shape::Shape;
+use crate::shape::Shape;
 
 #[derive(Debug)]
 pub struct Piece {

@@ -1,10 +1,10 @@
-use bank::*;
-use bitboard::*;
-use pieces;
-use player;
-use player::Player;
+use crate::bank::*;
+use crate::bitboard::*;
+use crate::pieces;
+use crate::player;
+use crate::player::Player;
 use rand::Rng;
-use placement::*;
+use crate::placement::*;
 
 #[derive(Clone)]
 pub struct Board {

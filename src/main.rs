@@ -17,17 +17,17 @@ mod player_set;
 mod shape;
 mod placement;
 
-use bitboard::*;
-use board::*;
-use mcts::*;
-use player::*;
-use player_set::*;
+use crate::bitboard::*;
+use crate::board::*;
+use crate::mcts::*;
+use crate::player::*;
+use crate::player_set::*;
 
 use std::time::SystemTime;
 
 use rand::{rngs::SmallRng, FromEntropy, Rng};
 
-use shape::*;
+use crate::shape::*;
 
 fn main() {
     /*

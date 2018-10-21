@@ -1,5 +1,5 @@
-use piece::*;
-use pieces;
+use crate::piece::*;
+use crate::pieces;
 use std::intrinsics;
 use std::iter;
 

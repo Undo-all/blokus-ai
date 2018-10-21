@@ -1,9 +1,9 @@
 use std::intrinsics;
 
-use player::Player;
-use shape::Shape;
-use placement::Placement;
-use pieces;
+use crate::player::Player;
+use crate::shape::Shape;
+use crate::placement::Placement;
+use crate::pieces;
 
 const WEST_MASK: u128 = 0x007F_FFF7_FFFF_7FFF_F7FF_FF7F_FFF7_FFFF;
 const EAST_MASK: u128 = 0xFEFF_FFEF_FFFE_FFFF_EFFF_FEFF_FFEF_FFFE;

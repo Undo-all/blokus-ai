@@ -1,6 +1,6 @@
 #[cfg_attr(rustfmt, rustfmt_skip)]
-use piece::*;
-use shape::Shape;
+use crate::piece::*;
+use crate::shape::Shape;
 use std::slice;
 
 pub const PIECES: [Piece; 21] = [

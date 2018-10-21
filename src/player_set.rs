@@ -1,4 +1,4 @@
-use player::*;
+use crate::player::*;
 
 #[derive(Clone)]
 pub struct PlayerSet {
