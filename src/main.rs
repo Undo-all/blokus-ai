@@ -3,9 +3,6 @@
 #![feature(duration_as_u128)]
 #![feature(test)]
 
-
-
-
 mod bank;
 mod bitboard;
 mod board;
@@ -115,4 +112,13 @@ fn main() {
     }
 
     println!("{:?}", board.find_wins());
+
+    /*let mut test = BitBoard::new();
+    test.blocks[1] = 1u128 << 19;
+    test.blocks[1] |= 1u128 << 59;
+    let illegal = test.illegal(Player::Green, &[BitBoard::new(), BitBoard::new(), BitBoard::new(), BitBoard::new()]);
+    let corners = test.corners(&illegal);
+    illegal.display();
+    println!();
+    corners.display();*/
 }

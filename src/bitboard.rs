@@ -112,7 +112,10 @@ impl BitBoard {
         } else {
             self.blocks[block] |= shifted & BOTTOM_MASK;
             let shifted = shape.bits >> (120 - shift);
-            self.blocks[block + 1] |= shifted & BOTTOM_MASK;
+
+            // TODO: see if this is actually necessary. I doubt it is.
+            let mask = if block == 2 { HALF_MASK } else { BOTTOM_MASK };
+            self.blocks[block + 1] |= shifted & mask;
         }
     }
 

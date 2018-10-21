@@ -5,7 +5,7 @@ use crate::player_set::*;
 
 use rand::Rng;
 
-const EXPLORATION: f64 = 1.4;
+const EXPLORATION: f64 = 0.4;
 const EPSILON: f64 = 0.0001;
 
 #[derive(Clone)]
@@ -65,7 +65,7 @@ impl Node {
                     self.out = out.clone();
                     for placement in moves {
                         let mut after = self.board.clone();
-                        after.perform_placement(&placement, self.turn);
+                        after.perform_placement(&placement, turn);
                         //self.children.push(Node::new(board, turn, out.clone()));
                         self.children.push(Node::new(after, turn, PlayerSet::new()));
                     }
