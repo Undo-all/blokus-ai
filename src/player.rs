@@ -17,18 +17,26 @@ impl Player {
             Player::Green => Player::Blue,
         }
     }
+
+    pub fn iter_from(start: Player) -> PlayerIterator {
+        PlayerIterator::new(start)
+    }
+
+    pub fn iter() -> PlayerIterator {
+        PlayerIterator::new(Player::Blue)
+    }
 }
 
 pub struct PlayerIterator {
     turn: Player,
-    done: bool,
+    count: u8,
 }
 
 impl PlayerIterator {
-    fn new() -> Self {
+    fn new(start: Player) -> Self {
         PlayerIterator {
-            turn: Player::Blue,
-            done: false,
+            turn: start,
+            count: 0,
         }
     }
 }
@@ -37,23 +45,18 @@ impl Iterator for PlayerIterator {
     type Item = Player;
 
     fn next(&mut self) -> Option<Player> {
-        if self.done {
+        if self.count == 4 {
             return None;
         }
 
         let turn = self.turn;
         self.turn = self.turn.next();
-        if self.turn == Player::Blue {
-            self.done = true;
-        }
+        self.count += 1;
 
         Some(turn)
     }
 }
 
-pub fn iter() -> PlayerIterator {
-    PlayerIterator::new()
-}
 
 impl Distribution<Player> for Standard {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Player {

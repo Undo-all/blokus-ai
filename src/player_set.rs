@@ -1,6 +1,6 @@
 use crate::player::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PlayerSet {
     players: u8,
 }

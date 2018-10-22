@@ -8,10 +8,10 @@ use rand::Rng;
 const EXPLORATION: f64 = 0.4;
 const EPSILON: f64 = 0.0001;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Node {
     pub board: Board,
-    turn: Player,
+    pub turn: Player,
     visits: u32,
     wins: [f64; 4],
     terminal: bool,
@@ -43,54 +43,27 @@ impl Node {
             return;
         }
 
-        let moves = self.board.find_moves(self.turn);
-
-        if moves.is_empty() {
-            //let mut out = self.out.add(self.turn);
-            let mut out = PlayerSet::new();
-            out = out.add(self.turn);
-
-            let mut turn = self.turn;
-            for _ in 0..3 {
-                turn = self.turn.next();
-
-                if out.contains(turn) {
-                    continue;
-                }
-
-                let moves = self.board.find_moves(turn);
-                if moves.is_empty() {
-                    out = out.add(turn);
-                } else {
-                    self.out = out.clone();
-                    for placement in moves {
-                        let mut after = self.board.clone();
-                        after.perform_placement(&placement, turn);
-                        //self.children.push(Node::new(board, turn, out.clone()));
-                        self.children.push(Node::new(after, turn, PlayerSet::new()));
-                    }
-
-                    return;
-                }
+        for turn in Player::iter_from(self.turn) {
+            if self.out.contains(turn) {
+                continue;
             }
 
-            self.out = out;
-            self.terminal = true;
-        } else {
-            let next = self.turn.next();
+            let moves = self.board.find_moves(turn);
+            if moves.is_empty() {
+                self.out = self.out.add(self.turn);
+            } else {
+                self.turn = turn;
+                for placement in moves {
+                    let mut after = self.board.clone();
+                    after.perform_placement(&placement, turn);
+                    self.children.push(Node::new(after, turn.next(), self.out.clone()));
+                }
 
-            /*
-            for board in moves {
-                self.children.push(Node::new(board, turn, self.out.clone()));
-            }*/
-
-            for placement in moves {
-                let mut after = self.board.clone();
-                after.perform_placement(&placement, self.turn);
-                self.children
-                    .push(Node::new(after, next, PlayerSet::new()));
+                return;
             }
         }
+
+        self.terminal = true;
     }
 
     fn select(&mut self) -> &mut Self {
@@ -139,7 +112,7 @@ impl Node {
         }
 
         let wins = self.board.find_wins();
-        for turn in player::iter() {
+        for turn in Player::iter() {
             self.wins[turn as usize] += wins[turn as usize];
         }
 
@@ -185,7 +158,7 @@ impl Node {
 
         self.visits += 1;
 
-        for turn in player::iter() {
+        for turn in Player::iter() {
             self.wins[turn as usize] += wins[turn as usize];
         }
 

@@ -1,7 +1,3 @@
-use std::collections::HashSet;
-use std::mem;
-use std::ops::{Add, Sub};
-
 #[derive(Clone, Debug)]
 pub struct Shape {
     pub bits: u128,

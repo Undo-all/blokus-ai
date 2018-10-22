@@ -1,12 +1,12 @@
 use crate::bank::*;
 use crate::bitboard::*;
 use crate::pieces;
+use crate::placement::*;
 use crate::player;
 use crate::player::Player;
 use rand::Rng;
-use crate::placement::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Board {
     pub placed: [BitBoard; 4],
     banks: [Bank; 4],
@@ -27,44 +27,8 @@ impl Board {
 
     pub fn find_moves(&self, player: Player) -> Vec<Placement> {
         let board = &self.placed[player as usize];
-
-        let (corners, illegal) = if board.is_empty() {
-            let start = match player {
-                Player::Blue => BitBoard::new()
-                    .place_shape(
-                        &pieces::iter().nth(0).unwrap().orientations[0],
-                        &0,
-                        0,
-                        &BitBoard::new(),
-                    ).unwrap(),
-                Player::Yellow => BitBoard::new()
-                    .place_shape(
-                        &pieces::iter().nth(0).unwrap().orientations[0],
-                        &0,
-                        380,
-                        &BitBoard::new(),
-                    ).unwrap(),
-                Player::Red => BitBoard::new()
-                    .place_shape(
-                        &pieces::iter().nth(0).unwrap().orientations[0],
-                        &0,
-                        399,
-                        &BitBoard::new(),
-                    ).unwrap(),
-                Player::Green => BitBoard::new()
-                    .place_shape(
-                        &pieces::iter().nth(0).unwrap().orientations[0],
-                        &0,
-                        19,
-                        &BitBoard::new(),
-                    ).unwrap(),
-            };
-
-            (start, BitBoard::new())
-        } else {
-            let illegal = board.illegal(player, &self.placed);
-            (board.corners(&illegal), illegal)
-        };
+        let illegal = board.illegal(player, &self.placed);
+        let corners = board.corners(&illegal);
 
         let mut moves = Vec::new();
         let bank = &self.banks[player as usize];
@@ -73,9 +37,14 @@ impl Board {
             for (piece, piece_id) in bank.take_iter() {
                 for (orientation_id, orientation) in piece.orientations.iter().enumerate() {
                     for attachment in orientation.attachments.iter() {
-                        if let Some(placement) =
-                            board.make_placement(piece_id, orientation, orientation_id, *attachment, corner, &illegal)
-                        {
+                        if let Some(placement) = board.make_placement(
+                            piece_id,
+                            orientation,
+                            orientation_id,
+                            *attachment,
+                            corner,
+                            &illegal,
+                        ) {
                             moves.push(placement);
                         }
                     }
@@ -107,7 +76,7 @@ impl Board {
         let mut winning_score = 0;
         let mut occurances = 0;
 
-        for turn in player::iter() {
+        for turn in Player::iter() {
             let score = self.score(turn);
             if score > winning_score {
                 winning_score = score;
@@ -119,7 +88,7 @@ impl Board {
 
         let mut wins: [f64; 4] = [0.0, 0.0, 0.0, 0.0];
 
-        for turn in player::iter() {
+        for turn in Player::iter() {
             if self.score(turn) == winning_score {
                 wins[turn as usize] += 1.0 / (occurances as f64);
             }
@@ -145,6 +114,7 @@ impl Board {
                 }
 
                 print!(" ");
+                //print!("\u{2001}");
             }
 
             print!("\x1b[49m");

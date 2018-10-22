@@ -1,9 +1,9 @@
 use std::intrinsics;
 
+use crate::pieces;
+use crate::placement::Placement;
 use crate::player::Player;
 use crate::shape::Shape;
-use crate::placement::Placement;
-use crate::pieces;
 
 const WEST_MASK: u128 = 0x007F_FFF7_FFFF_7FFF_F7FF_FF7F_FFF7_FFFF;
 const EAST_MASK: u128 = 0xFEFF_FFEF_FFFE_FFFF_EFFF_FEFF_FFEF_FFFE;
@@ -13,7 +13,10 @@ const FIRST_MASK: u128 = 0x0000_0000_0000_0000_0000_0000_000F_FFFE;
 const REST_MASK: u128 = 0x0000_0000_0000_0000_0000_0000_0007_FFFF;
 const HALF_MASK: u128 = 0x0000_0000_0000_0000_0000_00FF_FFFF_FFFF;
 
-#[derive(Clone, PartialEq)]
+const TOP_CORNERS: u128 = 0x0000_0000_0000_0000_0080_0010_0000;
+const BOTTOM_CORNERS: u128 = 0x0000_0000_0000_0000_0000_0000_0008_0001;
+
+#[derive(Clone, PartialEq, Debug)]
 pub struct BitBoard {
     pub blocks: [u128; 4],
 }
@@ -28,8 +31,7 @@ impl BitBoard {
     pub fn illegal(&self, player: Player, boards: &[BitBoard; 4]) -> Self {
         let mut enemy = BitBoard::new();
         let mut turn = player;
-        for _ in 0..3 {
-            turn = turn.next();
+        for turn in Player::iter_from(player.next()) {
             for i in 0..4 {
                 enemy.blocks[i] |= boards[turn as usize].blocks[i];
             }
@@ -69,6 +71,7 @@ impl BitBoard {
 
     pub fn corners(&self, illegal: &BitBoard) -> Self {
         let mut board = BitBoard::new();
+
         let mut block = self.blocks[0];
         let mut flood;
         let mut prop = 0;
@@ -92,8 +95,24 @@ impl BitBoard {
         flood |= (block >> 19) & EAST_MASK;
         board.blocks[3] = flood & HALF_MASK & !illegal.blocks[3];
 
+        board.blocks[0] |= BOTTOM_CORNERS & !illegal.blocks[0];
+        board.blocks[3] |= TOP_CORNERS & !illegal.blocks[3];
+
         board
     }
+
+/*
+    pub fn starting_corners(&self, player: Player, illegal: &BitBoard) -> BitBoard {
+        let mut corners = BitBoard::new();
+        corners.blocks[0] = BOTTOM_CORNERS;
+        corners.blocks[3] = TOP_CORNERS;
+
+        let mut turn = player;
+        corners.blocks[0] &= !illegal.blocks[0];
+        corners.blocks[3] &= !illegal.blocks[3];
+
+        corners
+    }*/
 
     pub fn count_tiles(&self) -> usize {
         self.blocks
@@ -119,7 +138,15 @@ impl BitBoard {
         }
     }
 
-    pub fn make_placement(&self, piece_id: usize, shape: &Shape, orientation_id: usize, attachment: u8, at: usize, illegal: &BitBoard) -> Option<Placement> {
+    pub fn make_placement(
+        &self,
+        piece_id: usize,
+        shape: &Shape,
+        orientation_id: usize,
+        attachment: u8,
+        at: usize,
+        illegal: &BitBoard,
+    ) -> Option<Placement> {
         if at < (attachment as usize) {
             return None;
         }
@@ -160,6 +187,7 @@ impl BitBoard {
         }
     }
 
+/*
     pub fn place_shape(
         &self,
         shape: &Shape,
@@ -210,7 +238,7 @@ impl BitBoard {
                 Some(copy)
             }
         }
-    }
+    }*/
 
     pub fn display(&self) {
         for block in self.blocks.iter().rev() {

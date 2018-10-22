@@ -22,6 +22,8 @@ use crate::player_set::*;
 
 use std::time::SystemTime;
 
+use std::io::Write;
+
 use rand::{rngs::SmallRng, FromEntropy, Rng};
 
 use crate::shape::*;
@@ -48,36 +50,18 @@ fn main() {
 
     let mut out = PlayerSet::new();
 
+    let mut file = std::fs::File::create("nodes.txt").unwrap();
+
+    let mut node = Node::new(board, Player::Blue, PlayerSet::new());
+
     loop {
-        if out.is_full() {
-            break;
-        }
-
-        if out.contains(turn) {
-            turn = turn.next();
-            continue;
-        }
-
-        if board.find_moves(turn).is_empty() {
-            out = out.add(turn);
-        }
-
-        /*if turn != Player::Blue {
-			board.play_randomly(turn, &mut rng);
-			board.display();
-			turn = turn.next();
-			println!();
-			continue;
-		}*/
-
-        /*board.display();
-        println!();*/
-
-        let mut node = Node::new(board.clone(), turn, out.clone());
+        node.display();
+        println!();
 
         if node.is_terminal() {
             break;
         }
+
         let start = SystemTime::now();
 
         let mut count = 0;
@@ -93,32 +77,11 @@ fn main() {
             break;
         }
 
-        match turn {
-            Player::Blue => print!("Blue"),
-            Player::Yellow => print!("Yellow"),
-            Player::Red => print!("Red"),
-            Player::Green => print!("Green"),
-        };
+        println!("{:?} ({})", node.turn, count);
 
-        println!(" ({})", count);
-
-        board = node.best_child(&mut rng).board.clone();
-        board.display();
-        println!();
-        // out = node.out.clone();
-        turn = turn.next();
-
-        count += 1;
+        let next = node.best_child(&mut rng);
+        node = Node::new(next.board.clone(), next.turn, PlayerSet::new());
     }
 
-    println!("{:?}", board.find_wins());
-
-    /*let mut test = BitBoard::new();
-    test.blocks[1] = 1u128 << 19;
-    test.blocks[1] |= 1u128 << 59;
-    let illegal = test.illegal(Player::Green, &[BitBoard::new(), BitBoard::new(), BitBoard::new(), BitBoard::new()]);
-    let corners = test.corners(&illegal);
-    illegal.display();
-    println!();
-    corners.display();*/
+    println!("{:?}", node.board.find_wins());
 }

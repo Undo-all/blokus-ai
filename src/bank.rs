@@ -3,7 +3,7 @@ use crate::pieces;
 use std::intrinsics;
 use std::iter;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Bank {
     pub pieces: u32,
 }
